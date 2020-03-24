@@ -1,0 +1,32 @@
+set multibuffer
+set brackets ""')>]}"
+#set matchbrackets "(]}"set morespace
+#set autoindent
+set boldtext
+#set cut
+#set historylog
+set linenumbers
+set locking
+#set mouse
+#set rebindkeypad
+set constantshow
+set nohelp
+set nonewlines
+set nowrap
+set regexp
+set smarthome
+set smooth
+set suspend
+set tabsize 2
+set tabstospaces
+## Paint the interface elements of nano. white, (black, blue, green, red, cyan, yellow, magenta)
+set titlecolor brightwhite,black
+set statuscolor brightwhite,black
+set numbercolor cyan
+set keycolor green
+set functioncolor yellow
+## Comments green highlighting
+syntax "comments" ".*"
+color green "^#.*"
+## Includes (keep at bottom)
+include "/usr/share/nano/*.nanorc"
