@@ -1,19 +1,16 @@
 #!/bin/bash
 ### Custom ~/.bash_functions
 
-##  ken-installs
-ken_apt_common=(grc figlet tmux rsync nano vim ncdu unzip wget curl sudo openssh-server htop bash-completion util-linux lsb-release psmisc tree git mailutils mutt apt-transport-https ca-certificates gnupg2 software-properties-common iputils-ping traceroute)
-ken_apt_utils=(nmon dstat iftop iotop nethogs hdparm pciutils lsof hddtemp lm-sensors)
-
 function MSG_ALERT() { printf "%s${White}${On_Red}${1}${NC}\n" ;}
 
+# Print temp of zipcode on command line
 function ken-weather() { curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p' ;}
 
 # Make your directories and files access rights sane.
 function ken-sane-permissions() { chmod -R u=rwX,g=rX,o= "$@" ;}
 
 # Show formatted ps of user processes
-function ken-ps-user() { ps $@ -u $USER -o pid,%cpu,%mem,bsdtime,command ; }
+function ken-ps-user() { ps $@ -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 
 ## Netcat (fastest way to transfer files)
 # (run both commands in current directory)
@@ -21,24 +18,6 @@ function ken-ps-user() { ps $@ -u $USER -o pid,%cpu,%mem,bsdtime,command ; }
 function ken-netcat-dest-pv() { nc -q 1 -l -p 1234 | pv -pterb -s 100G | tar xv ;}
 function ken-netcat-dest() { nc -q 1 -l -p 1234 | tar xv ;}   # Run on the receiving side
 function ken-netcat-source() { tar cv . | nc -q 1 "$1" 1234 ;}    # $1 is the ip address to server
-
-# TMUX ---------------------------------------
-# Auto rename window ssh
-#function settitle() {
-#  printf "\033k$1\033\\"
-#}
-#function ssh() {
-#  settitle "ssh:$*"
-#  command ssh "$@"
-#  settitle "bash"
-#}
-
-# send-keys to right pane
-function ts() {
-  args=$*
-  tmux send-keys -t right "$args" C-m
-}
-# ---------------------------------------------
 
 ## ranger
 function ranger() {
@@ -51,33 +30,33 @@ function ranger() {
 
 ## fzf ken-notes
 function ken-notes() {
-  cd "$HOME"/notes && fzf --bind "f1:execute($EDITOR {})" --bind "f2:execute(less -Rf {})" --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" --bind "f4:execute(bat {})" --bind "ctrl-e:execute($EDITOR {})" --bind "enter:execute(bat --color=always {} || less -Rf {})" --preview-window=right:80% --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
+  cd "${HOME}"/notes && fzf --bind "f1:execute($EDITOR {})" --bind "f2:execute(less -Rf {})" --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" --bind "f4:execute(bat {})" --bind "ctrl-e:execute($EDITOR {})" --bind "enter:execute(bat --color=always {} || less -Rf {})" --preview-window=right:80% --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
 }
 
 # simple note function
 function note()
 {
   # if file doesn't exist, create it
-  [ -f $HOME/.notes ] || touch $HOME/.notes
+  [ -f "${HOME}"/.notes ] || touch "${HOME}"/.notes
   # no arguments, print file
-  if [ $# = 0 ]
+  if [ "$#" = 0 ]
   then
-    cat $HOME/.notes
+    cat "${HOME}"/.notes
   # edit file
-  elif [ $1 = -e ]; then
-    $EDITOR $HOME/.notes
+  elif [ "$1" = -e ]; then
+    "${EDITOR}" "${HOME}"/.notes
   # add seperator
-  elif [ $1 = -s ]; then
-    echo "-------------------------------------------------" >> $HOME/.notes
+  elif [ "$1" = -s ]; then
+    echo "-------------------------------------------------" >> "${HOME}"/.notes
   # add date/time to note
-  elif [ $1 = -d ]; then
-    echo $(date "+%c") >> $HOME/.notes
+  elif [ "$1" = -d ]; then
+    echo "$(date "+%c")" >> "${HOME}"/.notes
   # clear file
-  elif [ $1 = -c ]; then
-    > $HOME/.notes
+  elif [ "$1" = -c ]; then
+    > "${HOME}"/.notes
   # add all arguments to file
   else
-    echo "$@" >> $HOME/.notes
+    echo "$@" >> "${HOME}"/.notes
   fi
 }
 
@@ -88,7 +67,7 @@ hr() {
 }
 
 # dmesg export to file
-function ken-dmesg-file { dmesg > /root/dmesg.$(date +%m.%d.%Y).txt; }
+function ken-dmesg-file { dmesg > /root/dmesg."$(date +%m.%d.%Y)".txt; }
 
 ## Recycle Bin (safe delete) -----------------------------------------
 #function del()
@@ -103,16 +82,16 @@ function del()
   local trash_dir="$HOME/.Trash"
   if [[ ! -d "$trash_dir" ]]; then mkdir -pv "$trash_dir"; fi
   for file in "$@" ; do
-    if [[ -d $file ]] ; then
-      local already_trashed=$trash_dir/`basename $file`
-      if [[ -n `/bin/ls -d $already_trashed*` ]] ; then
-        local count=`/bin/ls -d $already_trashed* | /usr/bin/wc -l`
+    if [[ -d "${file}" ]] ; then
+      local already_trashed="${trash_dir}"/"$(basename $file)"
+      if [[ -n "$(/bin/ls -d $already_trashed*)" ]] ; then
+        local count="$(/bin/ls -d $already_trashed* | /usr/bin/wc -l)"
         count=$((++count))
         /bin/mv --verbose "$file" "$trash_dir/$file$count"
         continue
       fi
     fi
-    /bin/mv --verbose --backup=numbered "$file" $HOME/.Trash
+    /bin/mv --verbose --backup=numbered "${file}" "${HOME}"/.Trash
   done
 }
 # ----------------------------------------------------------------------
@@ -174,7 +153,7 @@ function ken-show-colors() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%
 ## Fail2log list all jail status and tail log
 function ken-fail2ban-status() {
   fail_list="$(fail2ban-client status |grep "list" |tr -d , |cut -f 2)"
-  for i in $fail_list
+  for i in "${fail_list}"
     do
       fail2ban-client status "$i"
   done
@@ -196,15 +175,15 @@ function ken-status {
   printf "\n\e[30;42m  ***** SYSTEM INFORMATION *****  \e[0m\n"; hostnamectl
   printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
   printf "\n\e[30;42m  ***** MEMORY *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
+  printf "\n\e[30;42m  ***** DISK SPACE *****  \e[0m\n"; df -x tmpfs -x devtmpfs -x overlay -hT |sort -r -k 6,6
   printf "\n\e[30;42m  ***** TOP 10 [MEM / CPU / TIME] *****  \e[0m\n"; paste <(printf %s "$(ps -eo %mem,comm --sort=-%mem | head -n 11)") <(printf %s "$(ps -eo %cpu,comm --sort=-%cpu | head -n 11)") <(printf %s "$(ps -eo time,comm --sort=-time | head -n 11)") | column -s $'\t' -t
-  printf "\n\e[30;42m  ***** DISK SPACE *****  \e[0m\n"; df -x tmpfs -x devtmpfs -hT |sort -r -k 6,6
 }
 
 ## Show docker/lxc/kvm
 function ken-virt {
-  printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; sudo docker ps
-  printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; sudo lxc-ls -f | grep RUNNING
-  printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; sudo virsh list --all | grep running ; echo
+  printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && docker ps
+  printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && lxc-ls -f | grep RUNNING
+  printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && virsh list --all | grep running ; echo
 }
 
 ### Compress/Decompress ----------------------------------------------------------

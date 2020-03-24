@@ -1,0 +1,5 @@
+### Custom variables to use in scripts
+
+##  apt installs
+ken_apt_common=(grc figlet tmux rsync nano vim ncdu unzip wget curl sudo openssh-server htop bash-completion util-linux lsb-release psmisc tree git mailutils mutt apt-transport-https ca-certificates gnupg2 software-properties-common iputils-ping traceroute)
+ken_apt_utils=(nmon dstat iftop iotop nethogs hdparm pciutils lsof hddtemp lm-sensors)

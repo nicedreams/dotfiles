@@ -3,6 +3,14 @@
 [[ $- != *i* ]] && return
 
 #------------------------------------------------------------------------------
+### Enable/Disable (Y/N)
+#------------------------------------------------------------------------------
+DISPLAY_TMUX="Y"                # shows if tmux is running or not at login
+DISPLAY_GREETING="Y"            # shows greeting with info
+DISPLAY_GREETING_WEATHER="N"    # shows weather in greeting
+DISPLAY_GREETING_BASHINFO="N"   # shows weather in greeting
+
+#------------------------------------------------------------------------------
 ### COLORS (More colors in ~/.bash_aliases)
 #------------------------------------------------------------------------------
 BRed='\e[1;31m'         # Red
@@ -41,10 +49,8 @@ shopt -s nocaseglob     # pathname expansion will be treated as case-insensitive
 #shopt -s dotglob        # bash includes filenames beginning with a â€˜.â€™ in the results of filename expansion
 #shopt -s globstar       # If set, the pattern "**" used in a pathname expansion context will match all files and zero or more directories and subdirectories.
 
-# Perform file completion in a case insensitive fashion
-bind "set completion-ignore-case on"
-# Immediately add a trailing slash when autocompleting symlinks to directories
-bind "set mark-symlinked-directories on"
+bind "set completion-ignore-case on"      # Perform file completion in a case insensitive fashion
+bind "set mark-symlinked-directories on"  # Immediately add a trailing slash when autocompleting symlinks to directories
 
 #------------------------------------------------------------------------------
 ### Import alias/function definitions from file if exist.
@@ -64,24 +70,17 @@ if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
 fi
 
 ## Terminal color support else set PS1 with no colors
+#------------------------------------------------------------------------------
 if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-  ## Set PS1 color depending on root or user (Yellow Hostname)
-  #------------------------------------------------------------------------------
-  if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="\e[1;31m"; else PS1_USER_COLOR="\e[1;32m"; fi
-  #------------------------------------------------------------------------------
-  ## Style:  [username@hostname]~$
-  #PS1="[${PS1_USER_COLOR}\u\e[m@\e[1;33m\h\e[m]\e[1;34m\w\e[m\$ "
-  #------------------------------------------------------------------------------
+  # Set PS1 color depending on root or user (Yellow Hostname)
+#  if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="\e[1;31m"; else PS1_USER_COLOR="\e[1;32m"; fi
+  if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="${BRed}"; else PS1_USER_COLOR="${BGreen}"; fi
   # Detect if ~/.bash_gitprompt exists then sources file and sets PS1 prompt
-  if [[ -e "$HOME"/.bash_gitprompt ]]; then
-    source "$HOME"/.bash_gitprompt
-    # Style: CHROOT[hostname](username)[master !]~$
-    #PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})\$(parse_git_branch)${BBlue}\w${NC}\$ "
-    PS1="${debian_chroot:+($debian_chroot)}[\e[1;33m\h\e[m](${PS1_USER_COLOR}\u\e[m)\$(parse_git_branch)\e[1;34m\w\e[m\$ "
+  if [[ -e "$HOME"/.bash_gitprompt ]]; then source "$HOME"/.bash_gitprompt
   else
-    # Style: CHROOT[hostname](username)~$
-    #PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})${BBlue}\w${NC}\$ "
-    PS1="${debian_chroot:+($debian_chroot)}[\e[1;33m\h\e[m](${PS1_USER_COLOR}\u\e[m)\e[1;34m\w\e[m\$ "
+    PS1="${debian_chroot:+($debian_chroot)}[\e[1;33m\h\e[m](${PS1_USER_COLOR}\u\e[m)\e[1;34m\w\e[m\$ "        # Style: [hostname](username)~$
+    #PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})${BBlue}\w${NC}\$ "  # Style: [hostname](username)~$
+    #PS1="${debian_chroot:+($debian_chroot)}[${PS1_USER_COLOR}\u\e[m@\e[1;33m\h\e[m]\e[1;34m\w\e[m\$ "        # Style: [username@hostname]~$
   fi
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
@@ -193,8 +192,7 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 ### TMUX
 #------------------------------------------------------------------------------
 ### Display TMUX session @ login
-display_tmux="Y"
-if [[ "${display_tmux}" == "Y" ]]; then
+if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
   # Do nothing if root else tmux if user
   if [[ "${UID}" -ne 0 ]]; then
     ### List TMUX active sessions after login
@@ -218,10 +216,8 @@ export TMUX_CPU_COUNT="grep -c ^processor /proc/cpuinfo"
 #------------------------------------------------------------------------------
 ### LOGIN GREETINGS
 #------------------------------------------------------------------------------
-display_greeting="Y"
-if [[ "${display_greeting}" == "Y" ]]; then
+if [[ "${DISPLAY_GREETING}" == "Y" ]]; then
   greet_time="$(date "+%H")"
-  #weather_report="$(curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p')"
   if [ "$greet_time" -lt 12 ]; then greeting="Good morning"
   elif [ "$greet_time" -lt 18 ]; then greeting="Good afternoon"
   else greeting="Good evening"; fi
@@ -229,8 +225,13 @@ if [[ "${display_greeting}" == "Y" ]]; then
   if [[ "${UID}" -ne 0 ]]; then
     printf "%s${BBlue}$greeting ${PS1_USER_COLOR}$(whoami)${NC}.\n${BYellow}It is $(date "+%c") on $HOSTNAME${NC}.\n"  # print date/hostname
     if [[ -z "${TMUX}" ]]; then
-      #printf "%s${BGreen}The weather is ${weather_report} in Chandler, AZ${NC}.\n"                                       # print local weather
-      printf "%s${BCyan}This is BASH ${BRed}${BASH_VERSION%.*}${BCyan}\nDISPLAY on ${BRed}$DISPLAY${NC}\n"               # print bash version and display
+      if [[ "${DISPLAY_GREETING_WEATHER}" == "Y" ]]; then
+        weather_report="$(curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p')"
+        printf "%s${BGreen}The weather is ${weather_report} in Chandler, AZ${NC}.\n"                                    # print local weather
+      fi
+      if [[ "${DISPLAY_GREETING_BASHINFO}" == "Y" ]]; then
+        printf "%s${BCyan}This is BASH ${BRed}${BASH_VERSION%.*}${BCyan}\nDISPLAY on ${BRed}$DISPLAY${NC}\n"             # print bash version and display
+      fi
     fi
   else
     printf "%s${BBlue}$greeting ${PS1_USER_COLOR}$(whoami)${NC}.\n${BYellow}It is $(date "+%c") on $HOSTNAME${NC}.\n"  # print date/hostname
