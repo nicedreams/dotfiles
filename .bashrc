@@ -1,26 +1,10 @@
 #!/bin/bash
+# ~/.bashrc
+# Custom bashrc that could be used across multiple systems
+#------------------------------------------------------------------------------
+
 # If not running interactively, don't do anything!
 [[ $- != *i* ]] && return
-
-#------------------------------------------------------------------------------
-### Enable/Disable (Y/N)
-#------------------------------------------------------------------------------
-DISPLAY_TMUX="Y"                # shows if tmux is running or not at login
-DISPLAY_GREETING="Y"            # shows greeting with info
-DISPLAY_GREETING_WEATHER="N"    # shows weather in greeting
-DISPLAY_GREETING_BASHINFO="N"   # shows weather in greeting
-
-#------------------------------------------------------------------------------
-### COLORS (More colors in ~/.bash_aliases)
-#------------------------------------------------------------------------------
-BRed='\e[1;31m'         # Red
-BGreen='\e[1;32m'       # Green
-BYellow='\e[1;33m'      # Yellow
-BBlue='\e[1;34m'        # Blue
-BPurple='\e[1;35m'      # Purple
-BCyan='\e[1;36m'        # Cyan
-BWhite='\e[1;37m'       # White
-NC="\e[m"               # Color Reset
 
 #------------------------------------------------------------------------------
 ### HISTORY
@@ -55,9 +39,11 @@ bind "set mark-symlinked-directories on"  # Immediately add a trailing slash whe
 #------------------------------------------------------------------------------
 ### Import alias/function definitions from file if exist.
 #------------------------------------------------------------------------------
+if [[ -e "$HOME"/.bash_kenrc ]]; then source "$HOME"/.bash_kenrc ; fi
 if [[ -e "$HOME"/.bash_aliases ]]; then source "$HOME"/.bash_aliases ; fi
 if [[ -e "$HOME"/.bash_functions ]]; then source "$HOME"/.bash_functions ; fi
-if [[ -e "$HOME"/.bash_variables ]]; then source "$HOME"/.bash_variables ; fi
+if [[ -e "$HOME"/.bash_kenaliases ]]; then source "$HOME"/.bash_kenaliases ; fi
+if [[ -e "$HOME"/.bash_kenfunctions ]]; then source "$HOME"/.bash_kenfunctions ; fi
 
 #------------------------------------------------------------------------------
 ### PS1 PROMPT
@@ -72,14 +58,13 @@ fi
 ## Terminal color support else set PS1 with no colors
 #------------------------------------------------------------------------------
 if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-  # Set PS1 color depending on root or user (Yellow Hostname)
-#  if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="\e[1;31m"; else PS1_USER_COLOR="\e[1;32m"; fi
-  if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="${BRed}"; else PS1_USER_COLOR="${BGreen}"; fi
-  # Detect if ~/.bash_gitprompt exists then sources file and sets PS1 prompt
-  if [[ -e "$HOME"/.bash_gitprompt ]]; then source "$HOME"/.bash_gitprompt
+  if [[ -e "$HOME"/.bash_gitprompt ]]
+  then
+    source "$HOME"/.bash_gitprompt
   else
+    # Set PS1 color depending on root or user (Yellow Hostname)
+    if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="\e[1;31m"; else PS1_USER_COLOR="\e[1;32m"; fi
     PS1="${debian_chroot:+($debian_chroot)}[\e[1;33m\h\e[m](${PS1_USER_COLOR}\u\e[m)\e[1;34m\w\e[m\$ "        # Style: [hostname](username)~$
-    #PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})${BBlue}\w${NC}\$ "  # Style: [hostname](username)~$
     #PS1="${debian_chroot:+($debian_chroot)}[${PS1_USER_COLOR}\u\e[m@\e[1;33m\h\e[m]\e[1;34m\w\e[m\$ "        # Style: [username@hostname]~$
   fi
 else
@@ -135,50 +120,6 @@ fi
 #------------------------------------------------------------------------------
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then . /etc/bash_completion; fi
 
-### SSH Hushlogin (create ~/.hushlogin if not exists)
-#------------------------------------------------------------------------------
-if [[ ! -r "$HOME"/.hushlogin ]]; then touch "$HOME"/.hushlogin; fi
-
-#------------------------------------------------------------------------------
-### MAIL
-#------------------------------------------------------------------------------
-# Check for new mail at login if not =0 and wait ## seconds before mail checks
-MAILCHECK=60
-#if [ -d $HOME/Maildir/ ]; then
-#  export MAIL=$HOME/Maildir/
-#  export MAILPATH=$HOME/Maildir/
-#  export MAILDIR=$HOME/Maildir/
-#elif [ -f /var/mail/$USER ]; then
-#  export MAIL="/var/mail/$USER"
-#fi
-
-#------------------------------------------------------------------------------
-### Default editor
-#------------------------------------------------------------------------------
-export VISUAL="/bin/nano"
-export EDITOR="/bin/nano"
-
-#------------------------------------------------------------------------------
-### LESS Command Options
-#-------------------------------------------------------------
-# make less more friendly for non-text input files, see lesspipe(1)
-#[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-alias more='less'
-export PAGER=less
-export LESSCHARSET='latin1'
-export LESSOPEN='|/usr/bin/lesspipe.sh %s 2>&-'
-                # Use this if lesspipe.sh exists.
-export LESS='-i -N -w  -z-4 -g -e -M -X -F -R -P%t?f%f \
-:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
-# LESS man page colors (makes Man pages more readable).
-export LESS_TERMCAP_mb=$'\E[01;31m'
-export LESS_TERMCAP_md=$'\E[01;31m'
-export LESS_TERMCAP_me=$'\E[0m'
-export LESS_TERMCAP_se=$'\E[0m'
-export LESS_TERMCAP_so=$'\E[01;44;33m'
-export LESS_TERMCAP_ue=$'\E[0m'
-export LESS_TERMCAP_us=$'\E[01;32m'
-
 #------------------------------------------------------------------------------
 ### SSH Agent Start
 #------------------------------------------------------------------------------
@@ -187,62 +128,6 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 #  eval `ssh-agent`
 #  ssh-add
 #fi
-
-#------------------------------------------------------------------------------
-### TMUX
-#------------------------------------------------------------------------------
-### Display TMUX session @ login
-if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
-  # Do nothing if root else tmux if user
-  if [[ "${UID}" -ne 0 ]]; then
-    ### List TMUX active sessions after login
-    if [[ -z "${TMUX}" ]]; then
-      if ! tmux ls &> /dev/null; then
-        printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
-        printf "%s\n${BBlue}TMUX: No Active Sessions!${NC}\n"
-      else
-        printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
-        printf "%s\n${BGreen}TMUX:\t"; tmux ls; printf "%s${NC}"
-      fi
-    fi
-    ### Attach to active TMUX session or start new session if none available after login
-    #if [ -z "$TMUX" ] && [ -n "$SSH_TTY" ] && [[ $- =~ i ]]; then tmux attach-session || tmux new-session ; fi
-  fi
-fi
-
-### TMUX global variables
-export TMUX_CPU_COUNT="grep -c ^processor /proc/cpuinfo"
-
-#------------------------------------------------------------------------------
-### LOGIN GREETINGS
-#------------------------------------------------------------------------------
-if [[ "${DISPLAY_GREETING}" == "Y" ]]; then
-  greet_time="$(date "+%H")"
-  if [ "$greet_time" -lt 12 ]; then greeting="Good morning"
-  elif [ "$greet_time" -lt 18 ]; then greeting="Good afternoon"
-  else greeting="Good evening"; fi
-  printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
-  if [[ "${UID}" -ne 0 ]]; then
-    printf "%s${BBlue}$greeting ${PS1_USER_COLOR}$(whoami)${NC}.\n${BYellow}It is $(date "+%c") on $HOSTNAME${NC}.\n"  # print date/hostname
-    if [[ -z "${TMUX}" ]]; then
-      if [[ "${DISPLAY_GREETING_WEATHER}" == "Y" ]]; then
-        weather_report="$(curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p')"
-        printf "%s${BGreen}The weather is ${weather_report} in Chandler, AZ${NC}.\n"                                    # print local weather
-      fi
-      if [[ "${DISPLAY_GREETING_BASHINFO}" == "Y" ]]; then
-        printf "%s${BCyan}This is BASH ${BRed}${BASH_VERSION%.*}${BCyan}\nDISPLAY on ${BRed}$DISPLAY${NC}\n"             # print bash version and display
-      fi
-    fi
-  else
-    printf "%s${BBlue}$greeting ${PS1_USER_COLOR}$(whoami)${NC}.\n${BYellow}It is $(date "+%c") on $HOSTNAME${NC}.\n"  # print date/hostname
-  fi
-  printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
-fi
-
-#------------------------------------------------------------------------------
-### Use dircolors if exist
-#------------------------------------------------------------------------------
-[[ -e "$HOME"/.dircolors ]] && eval "$(dircolors --sh $HOME/.dircolors)"
 
 #------------------------------------------------------------------------------
 ### ALIASES
@@ -264,38 +149,24 @@ alias free='free -h'
 alias cd..="cd .."
 alias ..="cd .."
 alias mnt='mount | grep -E ^/dev | column -t'
+alias tree='tree -Csuh'    #  Nice alternative to 'recursive ls' ...
 #-------------------------------------------------------------
-# The 'ls' family
+# The ls family
 #-------------------------------------------------------------
 # Add colors for filetype and  human-readable sizes by default on 'ls':
 alias ls='ls -h --color'
+#alias ll='ls -lhAF --color'
+alias ll="ls -lv --group-directories-first"
+alias l='ls -lhF --color'
+alias la='ll -A'           #  Show hidden files.
 alias lx='ls -lXB'         #  Sort by extension.
 alias lk='ls -lSr'         #  Sort by size, biggest last.
 alias lt='ls -ltr'         #  Sort by date, most recent last.
 alias lc='ls -ltcr'        #  Sort by/show change time,most recent last.
 alias lu='ls -ltur'        #  Sort by/show access time,most recent last.
-alias ll="ls -lv --group-directories-first"
-alias lm='ll |more'        #  Pipe through 'more'
-alias lr='ll -R'           #  Recursive ls.
-alias la='ll -A'           #  Show hidden files.
-alias tree='tree -Csuh'    #  Nice alternative to 'recursive ls' ...
-alias l='ls -lhF --color'
-#alias ll='ls -lhAF --color'
 alias lls='ls -lhASrF --color'
 alias llt='ls -lhAtrF --color'
 alias lld='ls -Al --group-directories-first --color'
-
-### ALIASES - Git dotfiles
-#------------------------------------------------------------------------------
-alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'    # dotfiles git alias command
-alias dotfiles-ls='dotfiles ls-tree -r HEAD --name-only'        # list files
-alias dotfiles-remove='dotfiles rm --cached'            # remove files
-alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
-
-### fzf util for bash (https://github.com/junegunn/fzf)
-#------------------------------------------------------------------------------
-#[ -f ~/.fzf.bash ] && source "$HOME"/.fzf.bash
-if [[ -f ~/.fzf.bash ]]; then source "$HOME"/.fzf.bash; fi
 
 ### GRC Colors - apt install grc (Put at end of .bashrc)
 #------------------------------------------------------------------------------

@@ -1,73 +1,19 @@
 #!/bin/bash
-### Custom ~/.bash_functions
+# ~/.bash_functions
+# Custom functions that could be used across multiple systems
+#------------------------------------------------------------------------------
+### FUNCTIONS
+#------------------------------------------------------------------------------
 
-function MSG_ALERT() { printf "%s${White}${On_Red}${1}${NC}\n" ;}
-
-# Print temp of zipcode on command line
-function ken-weather() { curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p' ;}
-
-# Make your directories and files access rights sane.
-function ken-sane-permissions() { chmod -R u=rwX,g=rX,o= "$@" ;}
+# Make your directories and files access rights sane. Recursively give directories read&execute and files read privileges:
+function tools-sane-permissions() { find "$@" -type d -exec chmod 2775 {} \; && find "$1" -type d -exec chmod g+s {} \; && find "$1" -type f -exec chmod 0664 {} \; ;}
+#function tools-sane-permissions() { chmod -R u=rwX,g=rX,o= "$@" ;}
 
 # Show formatted ps of user processes
-function ken-ps-user() { ps $@ -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
-
-## Netcat (fastest way to transfer files)
-# (run both commands in current directory)
-# netcat-dest-pv shows progress indicator where netcat-dest does not
-function ken-netcat-dest-pv() { nc -q 1 -l -p 1234 | pv -pterb -s 100G | tar xv ;}
-function ken-netcat-dest() { nc -q 1 -l -p 1234 | tar xv ;}   # Run on the receiving side
-function ken-netcat-source() { tar cv . | nc -q 1 "$1" 1234 ;}    # $1 is the ip address to server
-
-## ranger
-function ranger() {
-  if ! /usr/bin/ranger
-  then
-    read -rp "Ranger not found! Press any key to install ranger and utils!"
-    apt install ranger atool highlight caca-utils w3m mediainfo poppler-utils
-  fi
-}
-
-## fzf ken-notes
-function ken-notes() {
-  cd "${HOME}"/notes && fzf --bind "f1:execute($EDITOR {})" --bind "f2:execute(less -Rf {})" --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" --bind "f4:execute(bat {})" --bind "ctrl-e:execute($EDITOR {})" --bind "enter:execute(bat --color=always {} || less -Rf {})" --preview-window=right:80% --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
-}
-
-# simple note function
-function note()
-{
-  # if file doesn't exist, create it
-  [ -f "${HOME}"/.notes ] || touch "${HOME}"/.notes
-  # no arguments, print file
-  if [ "$#" = 0 ]
-  then
-    cat "${HOME}"/.notes
-  # edit file
-  elif [ "$1" = -e ]; then
-    "${EDITOR}" "${HOME}"/.notes
-  # add seperator
-  elif [ "$1" = -s ]; then
-    echo "-------------------------------------------------" >> "${HOME}"/.notes
-  # add date/time to note
-  elif [ "$1" = -d ]; then
-    echo "$(date "+%c")" >> "${HOME}"/.notes
-  # clear file
-  elif [ "$1" = -c ]; then
-    > "${HOME}"/.notes
-  # add all arguments to file
-  else
-    echo "$@" >> "${HOME}"/.notes
-  fi
-}
-
-# Write a horizontal line of characters
-hr() {
-  # shellcheck disable=SC2183
-  printf '%*s\n' "${1:-$COLUMNS}" | tr ' ' "${2:-#}"
-}
+function tools-ps-user() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 
 # dmesg export to file
-function ken-dmesg-file { dmesg > /root/dmesg."$(date +%m.%d.%Y)".txt; }
+function tools-dmesg-file { dmesg > /root/dmesg."$(date +%m.%d.%Y)".txt; }
 
 ## Recycle Bin (safe delete) -----------------------------------------
 #function del()
@@ -97,19 +43,12 @@ function del()
 # ----------------------------------------------------------------------
 
 ## list processes using swap (enable one of three options)
-function ken-swap-usage() {
-  ## Listing all process swap space usage  
-  #for file in /proc/*/status ; do awk '/VmSwap|Name/{printf $2 " " $3}END{ print ""}' $file; done | sort -k 2 -n -r | less
-  ## Display processes using swap space sorted by used space
-  #find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -h | cut -d " " -f2-
-  ## Display top ten processes using swap space
+function tools-swap-usage() {
   find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- 
 }
 
-#function ken-reset-permissions()  { find "$1" -type d -exec chmod 2775 {} \; && find "$1" -type d -exec chmod g+s {} \; && find "$1" -type f -exec chmod 0664 {} \; ; }
-
-## when was linux installed (date/time) [broken]
-#function ken-installed-date() { ls -lact --full-time /etc | tail -1 | awk '{print $6,$7}' ; }
+## when was linux installed (date/time) [brotools]
+#function tools-installed-date() { ls -lact --full-time /etc | tail -1 | awk '{print $6,$7}' ; }
 
 # FILE/DIR BACKUP ---------------------------------------------------
 ## Make backup before editing file
@@ -118,19 +57,19 @@ cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1"
 }
 
 ## Create date stamp backup of file or directory
-function ken-backup-file() {
+function tools-backup-file() {
   cp "$@" "$*".backup-"$(date +%Y-%m-%d_%H.%M.%S)"
   echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!" 
 }
 
 ## Create date stamp gzip of file or directory
-function ken-backup-dir() {
+function tools-backup-dir() {
   tar -czvf "$*".backup-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@"
   echo "Created gzip of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!"
 }
 
 ## Create gzip backup of lxc container
-function ken-backup-lxc() {
+function tools-backup-lxc() {
   lxc-stop -n "$(basename "$1")"
   tar --numeric-owner -cpzvf LXC-"$HOSTNAME"-"$(basename "$1")"-"$(date +%Y.%m.%d-%H.%M.%S)".tar.gz "$1"
   echo "Created gzip of $* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!"
@@ -139,19 +78,19 @@ function ken-backup-lxc() {
 # -----------------------------------------------------------------------
 
 ## cheat.sh website command search database
-function ken-cheatsh() { curl cheat.sh/"$1"; }
+function tools-cheatsh() { curl cheat.sh/"$1"; }
 
 ## Find Top10 most used commands in history
-function ken-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
+function tools-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
 
 # List contents of /etc/cron.*
-function ken-cron-ls() { ls -l /etc/cron.{hourly,daily,weekly,monthly}; echo; tail -v -n20 /etc/crontab; echo; cat /mnt/noauto/old-ssd/var/spool/cron/crontabs/*; }
+function tools-cron-ls() { echo "######################"; ls -l /etc/cron.{hourly,daily,weekly,monthly}; echo "######################"; tail -v -n20 /etc/crontab; echo "######################"; crontab -l ;}
 
 # List terminal color pallet
-function ken-show-colors() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
+function tools-show-colors() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
 
 ## Fail2log list all jail status and tail log
-function ken-fail2ban-status() {
+function tools-fail2ban-status() {
   fail_list="$(fail2ban-client status |grep "list" |tr -d , |cut -f 2)"
   for i in "${fail_list}"
     do
@@ -161,7 +100,7 @@ function ken-fail2ban-status() {
 }
 
 ## Color log tail
-function ken-logtail-color() {
+function tools-logtail-color() {
   if [ $# -eq 0 ]; then
     sudo tail -f /var/log/{syslog,messages}
   fi
@@ -171,7 +110,7 @@ function ken-logtail-color() {
 }
 
 ## Show system status
-function ken-status {
+function tools-status {
   printf "\n\e[30;42m  ***** SYSTEM INFORMATION *****  \e[0m\n"; hostnamectl
   printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
   printf "\n\e[30;42m  ***** MEMORY *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
@@ -180,16 +119,58 @@ function ken-status {
 }
 
 ## Show docker/lxc/kvm
-function ken-virt {
+function tools-virt {
   printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && docker ps
   printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && lxc-ls -f | grep RUNNING
   printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && virsh list --all | grep running ; echo
 }
 
-### Compress/Decompress ----------------------------------------------------------
+### Netcat (fastest way to transfer files) --------------------------------------------------------------------
+function tools-netcat-fastest-transfer {
+[ ! -f /bin/nc ] && echo "netcat command not found at /bin/nc" && exit 1
+case "$1" in
+  --receive|--server)
+    printf "%sStarting receiver/server and accepting files into: $(pwd)\nWaiting for sender...\n"
+    nc -q 1 -l -p 1234 | tar xv
+  ;;
+  --receive-pv|--server-pv)
+    printf "%sStarting receiver/server with progress and accepting files into: $(pwd)\nWaiting for sender...\n"
+    nc -q 1 -l -p 1234 | pv -pterb -s 100G | tar xv
+  ;;
+  --send)
+    printf "%sStarting transfer of files in current directory to $2\nVerify server is running --receive first if having issues.\n"
+    tar cv . | nc -q 1 "$2" 1234
+  ;;
+  *)
+printf "%s
+  Uses netcat and tar to transfer files from sender to receiver as fast as
+  possible without encryption over port 1234.
+  Use only over LAN.  Not recommended for transfers over internet.
 
-## Compress files based on extension
-function ken-compress() {
+  Usage:
+    $0 <OPTION>
+
+  OPTIONS:
+    --receive|--server
+        Use this on server side first to prepare receiving files from sender.
+        Files will be transferred to current directory command was ran in.
+        Server stops listening after it receives a transfer from sender.
+
+    --receive-pv|--server-pv
+        Same as --receive but with transfer status using pv utility.
+
+    --send <ip_address_of_server>
+        Use this on sender side to send contents of current directory
+        to receiver (server).  This will immediately start the transfer of all
+        contents in current directory.
+        (Example: $0 --send 192.168.1.100)
+\n"
+  ;;
+esac
+}
+
+### Compress files based on extension ---------------------------------------------------------
+function tools-compress() {
    FILE=$1
    shift
    case $FILE in
@@ -207,8 +188,8 @@ function ken-compress() {
    esac
 }
 
-## Universal extract files
-function ken-extract {
+### Universal extract files -----------------------------------------------------------------------
+function tools-extract {
   if [ -z "$1" ]; then
     # display usage if no parameters given
     echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
