@@ -42,8 +42,6 @@ bind "set mark-symlinked-directories on"  # Immediately add a trailing slash whe
 if [[ -e "$HOME"/.bash_kenrc ]]; then source "$HOME"/.bash_kenrc ; fi
 if [[ -e "$HOME"/.bash_aliases ]]; then source "$HOME"/.bash_aliases ; fi
 if [[ -e "$HOME"/.bash_functions ]]; then source "$HOME"/.bash_functions ; fi
-if [[ -e "$HOME"/.bash_kenaliases ]]; then source "$HOME"/.bash_kenaliases ; fi
-if [[ -e "$HOME"/.bash_kenfunctions ]]; then source "$HOME"/.bash_kenfunctions ; fi
 
 #------------------------------------------------------------------------------
 ### PS1 PROMPT
@@ -87,54 +85,13 @@ if [[ -d "$HOME/bin" ]] ; then
   #PATH="${PATH:+${PATH}:}$HOME/bin"
 fi
 
-#------------------------------------------------------------------------------
-### SET TERMINAL
-#------------------------------------------------------------------------------
-#case "$TERM" in
-#  xterm|screen|tmux|rxvt-unicode)
-#    export TERM="$TERM-256color"
-#  ;;
-#esac
-#case "$TERM" in
-#  xterm|screen|tmux|rxvt-unicode)
-#    export TERM="$TERM-256color"
-#    echo "running as an x-terminal - $TERM"
-#  ;;
-#  *)
-#    echo "not running as an x-terminal - $TERM"
-#  ;;
-#esac
-#export TERM="screen-256color"
-
-### Export Language
-#------------------------------------------------------------------------------
-#export "LC_ALL=en_US.UTF-8"
-#export "LANG=en_US.UTF-8"
-#export "LANGUAGE=en_US.UTF-8"
-
-### Ncurses UTF8 Fix
-#------------------------------------------------------------------------------
-#export "NCURSES_NO_UTF8_ACS=1"
-
 ### Enable programmable completion features
 #------------------------------------------------------------------------------
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then . /etc/bash_completion; fi
 
 #------------------------------------------------------------------------------
-### SSH Agent Start
-#------------------------------------------------------------------------------
-###/home/ken/.bashrc (ssh-agent)
-#if [[ -z "$SSH_AUTH_SOCK" ]] ; then
-#  eval `ssh-agent`
-#  ssh-add
-#fi
-
-#------------------------------------------------------------------------------
 ### ALIASES
 #------------------------------------------------------------------------------
-#alias tmux='tmux -2'
-#alias tmux='tmux new-session -n $HOSTNAME'
-#alias ssh='TERM=xterm-256color ssh'
 alias top='top -E g'
 alias ps='ps --forest'
 alias less='less -S'
