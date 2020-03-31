@@ -8,6 +8,7 @@
 #------------------------------------------------------------------------------
 ### Enable/Disable (Y/N)
 #------------------------------------------------------------------------------
+START_SSH_AGENT="Y"             # start ssh-agent at login if not already running
 AUTO_LOGIN_TMUX="N"             # auto login to tmux session
 DISPLAY_TMUX="Y"                # shows if tmux is running or not at login
 DISPLAY_GREETING="N"            # shows greeting with info
@@ -64,10 +65,13 @@ if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_US
 ### SSH Agent
 #------------------------------------------------------------------------------
 # Start the ssh-agent in the background
-#if [[ -z "$SSH_AUTH_SOCK" ]] ; then
-#  eval $(ssh-agent -s)
-#  ssh-add
-#fi
+if [[ "${START_SSH_AGENT}" == "Y" ]]; then
+  if [[ -z "$SSH_AUTH_SOCK" ]] ; then
+    printf "Starting ssh-agent: "
+    eval $(ssh-agent -s)
+  #  ssh-add
+  fi
+fi
 
 ### SSH Hushlogin (create ~/.hushlogin if not exists)
 #------------------------------------------------------------------------------
