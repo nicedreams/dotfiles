@@ -40,7 +40,7 @@ function parse_git_branch() {
     if [ "${BRANCH}" == "master" ]; then
       BRANCH="${BGreen}${BRANCH}${NC}"
     else
-      BRANCH="${BBlue}${BRANCH}${NC}"
+      BRANCH="${BPurple}${BRANCH}${NC}"
     fi
     STAT="$(parse_git_dirty)"
     echo -e "[${BRANCH}${STAT}]"
@@ -70,4 +70,6 @@ function parse_git_dirty {
 # Set PS1 color depending on root or user
 if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="${BRed}"; else PS1_USER_COLOR="${BGreen}"; fi
 # Style: [hostname](username)[master !]~$
-export PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})\$(parse_git_branch)${BBlue}\w${NC}\$ "
+#export PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})\$(parse_git_branch)${BBlue}\w${NC}\$ "
+#export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;33m\]\h\[\e[m\]](\[${PS1_USER_COLOR}\]\u\[\e[m\])\$(parse_git_branch)\[\e[1;34m\]\w\[\e[m\]\\$ "
+export PS1="${debian_chroot:+($debian_chroot)}[\[${BYellow}\]\h\[${NC}\]](\[${PS1_USER_COLOR}\]\u\[${NC}\])\$(parse_git_branch)\[${BBlue}\]\w\[${NC}\]\\$ "

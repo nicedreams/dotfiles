@@ -4,7 +4,9 @@
 #------------------------------------------------------------------------------
 
 # If not running interactively, don't do anything!
-[[ $- != *i* ]] && return
+#[[ $- != *i* ]] && return
+#[[ -z "$PS1" ]] && return
+case $- in *i*) ;; *) return;; esac
 
 #------------------------------------------------------------------------------
 ### HISTORY
@@ -43,6 +45,12 @@ if [[ -e "$HOME"/.bash_kenrc ]]; then source "$HOME"/.bash_kenrc ; fi
 if [[ -e "$HOME"/.bash_aliases ]]; then source "$HOME"/.bash_aliases ; fi
 if [[ -e "$HOME"/.bash_functions ]]; then source "$HOME"/.bash_functions ; fi
 
+# Display error codes - Set trap to intercept a non-zero return code of the last program run:
+#function EC() {
+#  echo -e '\e[1;33m'code: $?'\e[m\n'
+#}
+#trap EC ERR
+
 #------------------------------------------------------------------------------
 ### PS1 PROMPT
 #------------------------------------------------------------------------------
@@ -60,10 +68,12 @@ if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
   then
     source "$HOME"/.bash_gitprompt
   else
-    # Set PS1 color depending on root or user (Yellow Hostname)
-    if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="\e[1;31m"; else PS1_USER_COLOR="\e[1;32m"; fi
-    PS1="${debian_chroot:+($debian_chroot)}[\e[1;33m\h\e[m](${PS1_USER_COLOR}\u\e[m)\e[1;34m\w\e[m\$ "        # Style: [hostname](username)~$
-    #PS1="${debian_chroot:+($debian_chroot)}[${PS1_USER_COLOR}\u\e[m@\e[1;33m\h\e[m]\e[1;34m\w\e[m\$ "        # Style: [username@hostname]~$
+    # Get color variable depending on root(red) or user(green)
+    if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
+
+    # Set PS1 color depending on root(red) or user(green)
+    export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;33m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [hostname](username)~$
+    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1_USER_COLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
   fi
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
@@ -81,13 +91,34 @@ fi
 ## Set PATH so it includes user's private bin if it exists
 #------------------------------------------------------------------------------
 if [[ -d "$HOME/bin" ]] ; then
-  PATH="$HOME/bin:$PATH"
-  #PATH="${PATH:+${PATH}:}$HOME/bin"
+  if [[ "$UID" -ne 0 ]]; then
+    # Includes only $HOME/bin/ and not sub directories
+    #PATH="$HOME/bin:${PATH}"
+    # Includes all sub directories in $HOME/bin/
+    PATH="${PATH}$( find ${HOME}/bin/ -type d -printf ":%p" )"
+  fi
+echo
 fi
+
+#------------------------------------------------------------------------------
+### SET TERMINAL
+#------------------------------------------------------------------------------
+case "$TERM" in
+  xterm|screen|tmux|rxvt-unicode)
+    export TERM="$TERM-256color"
+  ;;
+esac
+#export TERM="screen-256color"
 
 ### Enable programmable completion features
 #------------------------------------------------------------------------------
-if [ -f /etc/bash_completion ] && ! shopt -oq posix; then . /etc/bash_completion; fi
+#if ! shopt -oq posix; then
+#  if [ -f /usr/share/bash-completion/bash_completion ]; then
+#    . /usr/share/bash-completion/bash_completion
+#  elif [ -f /etc/bash_completion ]; then
+#    . /etc/bash_completion
+#  fi
+#fi
 
 #------------------------------------------------------------------------------
 ### ALIASES
@@ -112,9 +143,8 @@ alias tree='tree -Csuh'    #  Nice alternative to 'recursive ls' ...
 #-------------------------------------------------------------
 # Add colors for filetype and  human-readable sizes by default on 'ls':
 alias ls='ls -h --color'
-#alias ll='ls -lhAF --color'
-alias ll="ls -lv --group-directories-first"
-alias l='ls -lhF --color'
+alias l="ls -lv --group-directories-first"
+alias ll='ls -lhAF --color'
 alias la='ll -A'           #  Show hidden files.
 alias lx='ls -lXB'         #  Sort by extension.
 alias lk='ls -lSr'         #  Sort by size, biggest last.

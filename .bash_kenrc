@@ -8,8 +8,9 @@
 #------------------------------------------------------------------------------
 ### Enable/Disable (Y/N)
 #------------------------------------------------------------------------------
+AUTO_LOGIN_TMUX="N"             # auto login to tmux session
 DISPLAY_TMUX="Y"                # shows if tmux is running or not at login
-DISPLAY_GREETING="Y"            # shows greeting with info
+DISPLAY_GREETING="N"            # shows greeting with info
 DISPLAY_GREETING_WEATHER="N"    # shows weather in greeting
 DISPLAY_GREETING_BASHINFO="N"   # shows weather in greeting
 
@@ -46,24 +47,8 @@ On_White='\e[47m'       # White
 #
 NC="\e[m"               # Color Reset
 
-#------------------------------------------------------------------------------
-### SET TERMINAL
-#------------------------------------------------------------------------------
-#case "$TERM" in
-#  xterm|screen|tmux|rxvt-unicode)
-#    export TERM="$TERM-256color"
-#  ;;
-#esac
-#case "$TERM" in
-#  xterm|screen|tmux|rxvt-unicode)
-#    export TERM="$TERM-256color"
-#    echo "running as an x-terminal - $TERM"
-#  ;;
-#  *)
-#    echo "not running as an x-terminal - $TERM"
-#  ;;
-#esac
-#export TERM="screen-256color"
+# Get color variable depending on root(red) or user(green)
+if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
 
 ### Export Language
 #------------------------------------------------------------------------------
@@ -76,11 +61,11 @@ NC="\e[m"               # Color Reset
 #export "NCURSES_NO_UTF8_ACS=1"
 
 #------------------------------------------------------------------------------
-### SSH Agent Start
+### SSH Agent
 #------------------------------------------------------------------------------
-###/home/ken/.bashrc (ssh-agent)
+# Start the ssh-agent in the background
 #if [[ -z "$SSH_AUTH_SOCK" ]] ; then
-#  eval `ssh-agent`
+#  eval $(ssh-agent -s)
 #  ssh-add
 #fi
 
@@ -112,45 +97,77 @@ export EDITOR="/bin/nano"
 #-------------------------------------------------------------
 # make less more friendly for non-text input files, see lesspipe(1)
 #[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-alias more='less'
+#alias more='less'
 export PAGER=less
-export LESSCHARSET='latin1'
-export LESSOPEN='|/usr/bin/lesspipe.sh %s 2>&-'
-                # Use this if lesspipe.sh exists.
-export LESS='-i -N -w  -z-4 -g -e -M -X -F -R -P%t?f%f \
-:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
+#export LESSCHARSET='latin1'
+#export LESSOPEN='|/usr/bin/lesspipe.sh %s 2>&-'
+# Use this if lesspipe.sh exists.
+#export LESS='-i -N -w -z-4 -g -e -M -X -F -R -P%t?f%f \
+#:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 # LESS man page colors (makes Man pages more readable).
-export LESS_TERMCAP_mb=$'\E[01;31m'
-export LESS_TERMCAP_md=$'\E[01;31m'
-export LESS_TERMCAP_me=$'\E[0m'
-export LESS_TERMCAP_se=$'\E[0m'
-export LESS_TERMCAP_so=$'\E[01;44;33m'
-export LESS_TERMCAP_ue=$'\E[0m'
-export LESS_TERMCAP_us=$'\E[01;32m'
+#export LESS_TERMCAP_mb=$'\E[01;31m'
+#export LESS_TERMCAP_md=$'\E[01;31m'
+#export LESS_TERMCAP_me=$'\E[0m'
+#export LESS_TERMCAP_se=$'\E[0m'
+#export LESS_TERMCAP_so=$'\E[01;44;33m'
+#export LESS_TERMCAP_ue=$'\E[0m'
+#export LESS_TERMCAP_us=$'\E[01;32m'
 
 #------------------------------------------------------------------------------
 ### TMUX
 #------------------------------------------------------------------------------
-### Display TMUX session @ login
-if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
-  # Do nothing if root else tmux if user
+## Auto login to Tmux session or create new
+if [[ "${AUTO_LOGIN_TMUX}" == "Y" ]]; then
+  # Do nothing if root
   if [[ "${UID}" -ne 0 ]]; then
-    ### List TMUX active sessions after login
-    if [[ -z "${TMUX}" ]]; then
-      if ! tmux ls &> /dev/null; then
-        printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
-        printf "%s\n${BBlue}TMUX: No Active Sessions!${NC}\n"
-      else
-        printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
-        printf "%s\n${BGreen}TMUX:\t"; tmux ls; printf "%s${NC}"
-      fi
+    #-------------------------------------
+    if [ -z "$TMUX" ]; then
+     base_session="$HOSTNAME"
+     # Create a new session if it doesn't exist
+     tmux has-session -t "${base_session}" || tmux new-session -d -s "${base_session}"
+     # Are there any clients connected already?
+     client_cnt="$(tmux list-clients | wc -l)"
+     if [ "${client_cnt}" -ge 1 ]; then
+       session_name="${base_session}-${client_cnt}"
+       tmux new-session -d -t "${base_session}" -s "${session_name}"
+       tmux -2 attach-session -t "${session_name}" \; set-option destroy-unattached
+     else
+       tmux -2 attach-session -t "${base_session}"
+     fi
     fi
-    ### Attach to active TMUX session or start new session if none available after login
+    #-------------------------------------
+    ## Attach to active TMUX session or start new session if none available after login
     #if [ -z "$TMUX" ] && [ -n "$SSH_TTY" ] && [[ $- =~ i ]]; then tmux attach-session || tmux new-session ; fi
+    #-------------------------------------
+
+    ## If ssh detected attach to existing tmux session or create new one
+    #if [[ -n "$SSH_CONNECTION" ]]; then tmux attach || tmux new-session -t $HOSTNAME; fi
+    #-------------------------------------
   fi
 fi
 
-### TMUX global variables
+## Display TMUX session @ login
+if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
+  # Do nothing if root else tmux if user
+  if [[ "${UID}" -ne 0 ]]; then
+   # List TMUX active sessions after login
+   if [[ -z "${TMUX}" ]]; then
+     if ! tmux ls &> /dev/null; then
+       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
+       printf "%s\n${BBlue}TMUX: No Active Sessions!${NC}\n"
+     else
+       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
+       #printf "%s\n${BGreen}TMUX:\t"; tmux ls; printf "%s${NC}"
+     
+       sessions="$( tmux ls 2> /dev/null | awk '! /attached/ { sub(":", "", $1); print $1; }' | xargs echo )"
+       printf "%s\n${BYellow}TMUX Active Sessions: ${BCyan}${sessions}${NC}\n"
+       unset sessions
+     fi
+   fi
+  fi
+fi
+
+## TMUX global variables
 export TMUX_CPU_COUNT="grep -c ^processor /proc/cpuinfo"
 
 #------------------------------------------------------------------------------
@@ -196,11 +213,15 @@ alias dotfiles-remove='dotfiles rm --cached'            # remove files
 alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
 
 #------------------------------------------------------------------------------
-### KEN ALIASES
+### KEN ALIASES ---------------------------------------------------------------
 #------------------------------------------------------------------------------
+alias ken-tmux-new-tripanewindow='tmux new-window \; split-window -v \; select-pane -t 1 \; split-window -h \; select-pane -t 3 \; set-option -w monitor-activity off \;'
 #alias tmux='tmux -2'
 #alias tmux='tmux new-session -n $HOSTNAME'
 #alias ssh='TERM=xterm-256color ssh'
+
+# rsync .bash* from kenserver to local home
+alias ken-rsync-bashrc-from-kenserver="rsync -avh --progress ken@192.168.2.10:/home/ken/{.bashrc,.bash_aliases,.bash_functions,.bash_kenrc,.bash_gitprompt} ${HOME}/"
 
 ## nano
 # force nano for sh color syntax highlighting when file has no .sh extension
@@ -223,9 +244,15 @@ alias ken-www-python='python3 -m http.server'
 alias ken-cifs-mount='sudo mount -t cifs -o uid=www-data,gid=www-data,dir_mode=0755,file_mode=0644 //192.168.2.7/share /mnt/samba/quickmount'
 
 #------------------------------------------------------------------------------
-### KEN FUNCTIONS
+### KEN FUNCTIONS -------------------------------------------------------------
 #------------------------------------------------------------------------------
 
+# Calculator
+function calc() {
+  echo "scale=3;$@" | bc -l
+}
+
+# Show alert message in red on white colors
 function MSG_ALERT() { printf "%s${White}${On_Red}${1}${NC}\n" ;}
 
 # Print temp of zipcode on command line
@@ -236,30 +263,44 @@ function ken-notes() {
   cd "${HOME}"/notes && fzf --bind "f1:execute($EDITOR {})" --bind "f2:execute(less -Rf {})" --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" --bind "f4:execute(bat {})" --bind "ctrl-e:execute($EDITOR {})" --bind "enter:execute(bat --color=always {} || less -Rf {})" --preview-window=right:80% --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
 }
 
-# simple note function
-function note()
-{
+# Simple note taker
+note () {
   # if file doesn't exist, create it
-  [ -f "${HOME}"/.notes ] || touch "${HOME}"/.notes
-  # no arguments, print file
-  if [ "$#" = 0 ]
-  then
-    cat "${HOME}"/.notes
-  # edit file
-  elif [ "$1" = -e ]; then
-    "${EDITOR}" "${HOME}"/.notes
-  # add seperator
-  elif [ "$1" = -s ]; then
-    echo "-------------------------------------------------" >> "${HOME}"/.notes
-  # add date/time to note
-  elif [ "$1" = -d ]; then
-    echo "$(date "+%c")" >> "${HOME}"/.notes
-  # clear file
-  elif [ "$1" = -c ]; then
-    > "${HOME}"/.notes
-  # add all arguments to file
+  if [[ ! -f $HOME/.notes ]]; then
+    touch "$HOME/.notes"
+  fi
+
+  if ! (($#)); then
+    # no arguments, print file
+    cat "$HOME/.notes"
+  elif [[ "$1" == "-c" ]]; then
+    # clear file
+    printf "%s" > "$HOME/.notes"
   else
-    echo "$@" >> "${HOME}"/.notes
+    # add all arguments to file
+    printf "%s\n" "$*" >> "$HOME/.notes"
+  fi
+}
+
+# Simple task utility
+todo() {
+  if [[ ! -f "${HOME}"/.todo ]]; then
+    touch "${HOME}/.todo"
+  fi
+
+  if ! (($#)); then
+    cat "${HOME}/.todo"
+  elif [[ "$1" == "-l" ]]; then
+    nl -b a "${HOME}/.todo"
+  elif [[ "$1" == "-c" ]]; then
+    > "${HOME}"/.todo
+  elif [[ "$1" == "-r" ]]; then
+    nl -b a "${HOME}/.todo"
+    eval printf %.0s- '{1..'"${COLUMNS:-$(tput cols)}"\}; echo
+    read -p "Type a number to remove: " number
+    sed -i "${number}d" "${HOME}"/.todo
+  else
+    printf "%s\n" "$*" >> "${HOME}"/.todo
   fi
 }
 
@@ -269,8 +310,70 @@ hr() {
   printf '%*s\n' "${1:-$COLUMNS}" | tr ' ' "${2:-#}"
 }
 
+## Recycle Bin (safe delete) -----------------------------------------
+#function del()
+#{
+#  if [[ ! -d "/${HOME}/.local/share/Trash/files/" ]]; then printf "Creating directory\n"; mkdir -pv "/${HOME}/.local/share/Trash/files/"; fi
+#  mv "$@" "/${HOME}/.local/share/Trash/files/"
+#}
+
+## will not overwrite files that have the same name
+function del()
+{
+  local trash_dir="$HOME/.Trash"
+  if [[ ! -d "$trash_dir" ]]; then mkdir -pv "$trash_dir"; fi
+  for file in "$@" ; do
+    if [[ -d "${file}" ]] ; then
+      local already_trashed="${trash_dir}"/"$(basename $file)"
+      if [[ -n "$(/bin/ls -d $already_trashed*)" ]] ; then
+        local count="$(/bin/ls -d $already_trashed* | /usr/bin/wc -l)"
+        count=$((++count))
+        /bin/mv --verbose "$file" "$trash_dir/$file$count"
+        continue
+      fi
+    fi
+    /bin/mv --verbose --backup=numbered "${file}" "${HOME}"/.Trash
+  done
+}
+# ----------------------------------------------------------------------
+
+## list processes using swap (enable one of three options)
+function ken-swap-usage() {
+  find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- 
+}
+
+# FILE/DIR BACKUP -------------------------------------------------------
+# -----------------------------------------------------------------------
+
+## Create date stamp gzip of file or directory
+function ken-backup-dir() {
+  if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; then
+    echo "Error occured while creating backup!"
+  else
+    echo "Created gzip of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")"
+  fi
+}
+
+## Create date stamp backup of file or directory
+function ken-backup-file() {
+  cp "$@" "$*"-"$(date +%Y-%m-%d_%H.%M.%S)"
+  echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")"
+}
+
+## Make backup before editing file
+function safeedit() {
+cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1"
+}
+
+## Create gzip backup of lxc container
+function ken-backup-lxc() {
+  lxc-stop -n "$(basename "$1")"
+  tar --numeric-owner -cpzvf LXC-"$HOSTNAME"-"$(basename "$1")"-"$(date +%Y.%m.%d-%H.%M.%S)".tar.gz "$1"
+  echo "Created gzip of $* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!"
+}
+
 #------------------------------------------------------------------------------
-### KEN VARIABLES
+### KEN VARIABLES -------------------------------------------------------------
 #------------------------------------------------------------------------------
 ## apt installs
 #ken_apt_common=(grc figlet tmux rsync nano vim ncdu unzip wget curl sudo openssh-server htop bash-completion util-linux lsb-release psmisc tree git mailutils mutt apt-transport-https ca-certificates gnupg2 software-properties-common iputils-ping traceroute)

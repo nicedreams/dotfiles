@@ -6,76 +6,14 @@
 #------------------------------------------------------------------------------
 
 # Make your directories and files access rights sane. Recursively give directories read&execute and files read privileges:
-function tools-sane-permissions() { find "$@" -type d -exec chmod 2775 {} \; && find "$1" -type d -exec chmod g+s {} \; && find "$1" -type f -exec chmod 0664 {} \; ;}
-#function tools-sane-permissions() { chmod -R u=rwX,g=rX,o= "$@" ;}
+#function tools-reset-permissions() { find "$@" -type d -exec chmod 0755 {} \; && find "$@" -type f -exec chmod 0664 {} \; ;}
+function tools-reset-permissions() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664;}
 
 # Show formatted ps of user processes
 function tools-ps-user() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 
 # dmesg export to file
 function tools-dmesg-file { dmesg > /root/dmesg."$(date +%m.%d.%Y)".txt; }
-
-## Recycle Bin (safe delete) -----------------------------------------
-#function del()
-#{
-#  if [[ ! -d "/${HOME}/.local/share/Trash/files/" ]]; then printf "Creating directory\n"; mkdir -pv "/${HOME}/.local/share/Trash/files/"; fi
-#  mv "$@" "/${HOME}/.local/share/Trash/files/"
-#}
-
-## will not overwrite files that have the same name
-function del()
-{
-  local trash_dir="$HOME/.Trash"
-  if [[ ! -d "$trash_dir" ]]; then mkdir -pv "$trash_dir"; fi
-  for file in "$@" ; do
-    if [[ -d "${file}" ]] ; then
-      local already_trashed="${trash_dir}"/"$(basename $file)"
-      if [[ -n "$(/bin/ls -d $already_trashed*)" ]] ; then
-        local count="$(/bin/ls -d $already_trashed* | /usr/bin/wc -l)"
-        count=$((++count))
-        /bin/mv --verbose "$file" "$trash_dir/$file$count"
-        continue
-      fi
-    fi
-    /bin/mv --verbose --backup=numbered "${file}" "${HOME}"/.Trash
-  done
-}
-# ----------------------------------------------------------------------
-
-## list processes using swap (enable one of three options)
-function tools-swap-usage() {
-  find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- 
-}
-
-## when was linux installed (date/time) [brotools]
-#function tools-installed-date() { ls -lact --full-time /etc | tail -1 | awk '{print $6,$7}' ; }
-
-# FILE/DIR BACKUP ---------------------------------------------------
-## Make backup before editing file
-function safeedit() {
-cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1"
-}
-
-## Create date stamp backup of file or directory
-function tools-backup-file() {
-  cp "$@" "$*".backup-"$(date +%Y-%m-%d_%H.%M.%S)"
-  echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!" 
-}
-
-## Create date stamp gzip of file or directory
-function tools-backup-dir() {
-  tar -czvf "$*".backup-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@"
-  echo "Created gzip of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!"
-}
-
-## Create gzip backup of lxc container
-function tools-backup-lxc() {
-  lxc-stop -n "$(basename "$1")"
-  tar --numeric-owner -cpzvf LXC-"$HOSTNAME"-"$(basename "$1")"-"$(date +%Y.%m.%d-%H.%M.%S)".tar.gz "$1"
-  echo "Created gzip of $* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!"
-}
-
-# -----------------------------------------------------------------------
 
 ## cheat.sh website command search database
 function tools-cheatsh() { curl cheat.sh/"$1"; }
@@ -127,7 +65,7 @@ function tools-virt {
 
 ### Netcat (fastest way to transfer files) --------------------------------------------------------------------
 function tools-netcat-fastest-transfer {
-[ ! -f /bin/nc ] && echo "netcat command not found at /bin/nc" && exit 1
+[ ! -f /bin/nc ] && printf "netcat command not found at /bin/nc\n" && exit 1
 case "$1" in
   --receive|--server)
     printf "%sStarting receiver/server and accepting files into: $(pwd)\nWaiting for sender...\n"
@@ -139,7 +77,9 @@ case "$1" in
   ;;
   --send)
     printf "%sStarting transfer of files in current directory to $2\nVerify server is running --receive first if having issues.\n"
+    [ -z "${$2}" ] && printf "Address of receiver/server not entered.\n" && exit 1
     tar cv . | nc -q 1 "$2" 1234
+    shift
   ;;
   *)
 printf "%s
