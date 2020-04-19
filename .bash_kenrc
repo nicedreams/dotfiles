@@ -8,12 +8,15 @@
 #------------------------------------------------------------------------------
 ### Enable/Disable (Y/N)
 #------------------------------------------------------------------------------
-START_SSH_AGENT="Y"             # start ssh-agent at login if not already running
 AUTO_LOGIN_TMUX="N"             # auto login to tmux session
-DISPLAY_TMUX="Y"                # shows if tmux is running or not at login
+#--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
+DISPLAY_TMUX="Y"                # shows if tmux has open sessions at login
 DISPLAY_GREETING="N"            # shows greeting with info
 DISPLAY_GREETING_WEATHER="N"    # shows weather in greeting
 DISPLAY_GREETING_BASHINFO="N"   # shows weather in greeting
+START_SSH_AGENT="N"             # start ssh-agent at login if not already running
+DISPLAY_NOTE="Y"                # shows contents of ~/.note
+DISPLAY_TODO="Y"                # shows contents of ~/.todo
 
 #------------------------------------------------------------------------------
 ### COLORS
@@ -48,8 +51,22 @@ On_White='\e[47m'       # White
 #
 NC="\e[m"               # Color Reset
 
+alias nano='vim'
+
 # Get color variable depending on root(red) or user(green)
 if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
+
+#------------------------------------------------------------------------------
+## WINDOW TITLE Prevent messed up terminal-window titles
+#------------------------------------------------------------------------------
+case $TERM in
+  xterm*|rxvt*)
+    TITLEBAR='\[\033]0;\u:${PWD}\007\]'
+  ;;
+  *)
+    TITLEBAR=""
+  ;;
+esac
 
 ### Export Language
 #------------------------------------------------------------------------------
@@ -93,8 +110,19 @@ MAILCHECK=60
 #------------------------------------------------------------------------------
 ### Default editor
 #------------------------------------------------------------------------------
-export VISUAL="/bin/nano"
-export EDITOR="/bin/nano"
+export VISUAL="vim"
+export EDITOR="vim"
+
+#------------------------------------------------------------------------------
+### MAN Command Options
+#------------------------------------------------------------------------------
+export LESS_TERMCAP_mb=$'\e[1;32m'
+export LESS_TERMCAP_md=$'\e[1;32m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[01;33m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[1;4;31m'
 
 #------------------------------------------------------------------------------
 ### LESS Command Options
@@ -122,32 +150,11 @@ export PAGER=less
 #------------------------------------------------------------------------------
 ## Auto login to Tmux session or create new
 if [[ "${AUTO_LOGIN_TMUX}" == "Y" ]]; then
-  # Do nothing if root
-  if [[ "${UID}" -ne 0 ]]; then
-    #-------------------------------------
-    if [ -z "$TMUX" ]; then
-     base_session="$HOSTNAME"
-     # Create a new session if it doesn't exist
-     tmux has-session -t "${base_session}" || tmux new-session -d -s "${base_session}"
-     # Are there any clients connected already?
-     client_cnt="$(tmux list-clients | wc -l)"
-     if [ "${client_cnt}" -ge 1 ]; then
-       session_name="${base_session}-${client_cnt}"
-       tmux new-session -d -t "${base_session}" -s "${session_name}"
-       tmux -2 attach-session -t "${session_name}" \; set-option destroy-unattached
-     else
-       tmux -2 attach-session -t "${base_session}"
-     fi
-    fi
-    #-------------------------------------
-    ## Attach to active TMUX session or start new session if none available after login
-    #if [ -z "$TMUX" ] && [ -n "$SSH_TTY" ] && [[ $- =~ i ]]; then tmux attach-session || tmux new-session ; fi
-    #-------------------------------------
-
-    ## If ssh detected attach to existing tmux session or create new one
-    #if [[ -n "$SSH_CONNECTION" ]]; then tmux attach || tmux new-session -t $HOSTNAME; fi
-    #-------------------------------------
-  fi
+  ## Attach to active TMUX session or start new session if none available after login
+  if [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
+  #-------------------------------------
+  ## If ssh detected attach to existing tmux session or create new one
+  #if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session -t ${HOSTNAME}; fi
 fi
 
 ## Display TMUX session @ login
@@ -157,15 +164,17 @@ if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
    # List TMUX active sessions after login
    if [[ -z "${TMUX}" ]]; then
      if ! tmux ls &> /dev/null; then
-       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
-       printf "%s\n${BBlue}TMUX: No Active Sessions!${NC}\n"
+       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
+       printf "%s${BRed}TMUX: No Active Sessions!${NC}\n"
+       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
      else
-       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}"
-       #printf "%s\n${BGreen}TMUX:\t"; tmux ls; printf "%s${NC}"
+       printf "%s${BGreen}-------------------------------------------------------------------------------${NC}\n"
+       printf "%s${BCyan}TMUX: Listing Sessions:\n"; tmux ls; printf "%s${NC}\n"
+       printf "%s${BGreen}-------------------------------------------------------------------------------${NC}\n"
      
-       sessions="$( tmux ls 2> /dev/null | awk '! /attached/ { sub(":", "", $1); print $1; }' | xargs echo )"
-       printf "%s\n${BYellow}TMUX Active Sessions: ${BCyan}${sessions}${NC}\n"
-       unset sessions
+       #sessions="$( tmux ls 2> /dev/null | awk '! /attached/ { sub(":", "", $1); print $1; }' | xargs echo )"
+       #printf "%s\n${BYellow}TMUX Active Sessions: ${BCyan}${sessions}${NC}\n"
+       #unset sessions
      fi
    fi
   fi
@@ -200,6 +209,25 @@ if [[ "${DISPLAY_GREETING}" == "Y" ]]; then
   printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
 fi
 
+
+### Display notes at login
+#------------------------------------------------------------------------------
+if [[ "${DISPLAY_NOTE}" == "Y" ]]; then
+  if [[ -f ~/.note ]] && [[ -s ~/.note ]]; then
+    printf "\n~/.note\n-------------------------------------------------------------------------------\n"
+    cat ~/.note
+  fi
+fi
+
+### Display todo at login
+#------------------------------------------------------------------------------
+if [[ "${DISPLAY_TODO}" == "Y" ]]; then
+  if [[ -f ~/.todo ]] && [[ -s ~/.todo ]]; then
+    printf "\n~/.todo\n-------------------------------------------------------------------------------\n"
+    cat ~/.todo
+  fi
+fi
+
 ### Use dircolors if exist
 #------------------------------------------------------------------------------
 [[ -e "$HOME"/.dircolors ]] && eval "$(dircolors --sh $HOME/.dircolors)"
@@ -224,8 +252,30 @@ alias ken-tmux-new-tripanewindow='tmux new-window \; split-window -v \; select-p
 #alias tmux='tmux new-session -n $HOSTNAME'
 #alias ssh='TERM=xterm-256color ssh'
 
+# start ssh with ssh-agent
+
+assh() {
+  (
+    # Ensure we don't use the "regular" agent.
+    unset SSH_AUTH_SOCK
+    # Spawn a new, empty, agent.
+    eval $(ssh-agent)
+    [ -n "$SSH_AUTH_SOCK" ] || exit 1
+    # On exit, kill the agent.
+    trap "ssh-agent -k > /dev/null" EXIT
+    # Invoke SSH with agent forwarding enabled and automatically add the needed private key in the agent, with "confirm" mode.
+    # -o AddKeysToAgent=confirm - adds the unencrypted private key to the agent but each use must be confirmed
+    ssh -o AddKeysToAgent=confirm \
+      -o ForwardAgent=yes \
+      "$@"
+  )
+}
+
 # rsync .bash* from kenserver to local home
-alias ken-rsync-bashrc-from-kenserver="rsync -avh --progress ken@192.168.2.10:/home/ken/{.bashrc,.bash_aliases,.bash_functions,.bash_kenrc,.bash_gitprompt} ${HOME}/"
+alias ken-rsync-dotfiles-kenserver="rsync -avh --progress ken@192.168.2.10:/home/ken/{.bashrc,.bash_aliases,.bash_functions,.bash_kenrc,.bash_gitprompt,.tmux*,.vim*,.mutt*} ${HOME}/"
+
+# open vimwiki
+alias vim-wiki='vim -c VimwikiIndex'
 
 ## nano
 # force nano for sh color syntax highlighting when file has no .sh extension
@@ -241,11 +291,11 @@ alias r='ranger'
 alias ken-weather-report='curl wttr.in/85226'
 
 ## start web server (php/python3)
-alias ken-www-php='php -S 0.0.0.0:8000'
-alias ken-www-python='python3 -m http.server'
+#alias ken-www-php='php -S 0.0.0.0:8000'
+#alias ken-www-python='python3 -m http.server'
 
 ### SAMBA/CIFS MOUNTS
-alias ken-cifs-mount='sudo mount -t cifs -o uid=www-data,gid=www-data,dir_mode=0755,file_mode=0644 //192.168.2.7/share /mnt/samba/quickmount'
+#alias ken-cifs-mount='sudo mount -t cifs -o uid=www-data,gid=www-data,dir_mode=0755,file_mode=0644 //192.168.2.7/share /mnt/samba/quickmount'
 
 #------------------------------------------------------------------------------
 ### KEN FUNCTIONS -------------------------------------------------------------
@@ -257,61 +307,97 @@ function calc() {
 }
 
 # Show alert message in red on white colors
-function MSG_ALERT() { printf "%s${White}${On_Red}${1}${NC}\n" ;}
+#function MSG_ALERT() { printf "%s${White}${On_Red}${1}${NC}\n" ;}
 
 # Print temp of zipcode on command line
 function ken-weather() { curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p' ;}
 
 ## fzf ken-notes
 function ken-notes() {
-  cd "${HOME}"/notes && fzf --bind "f1:execute($EDITOR {})" --bind "f2:execute(less -Rf {})" --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" --bind "f4:execute(bat {})" --bind "ctrl-e:execute($EDITOR {})" --bind "enter:execute(bat --color=always {} || less -Rf {})" --preview-window=right:80% --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
+  cd "${HOME}"/notes
+  fzf --header="F1:Editor F2:Less F3:highlight F4:bat CTRL+E:Editor ENTER:bat" \
+   --bind "f1:execute($EDITOR {})" \
+   --bind "f2:execute(less -Rf {})" \
+   --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" \
+   --bind "f4:execute(bat {})" \
+   --bind "ctrl-e:execute($EDITOR {})" \
+   --bind "enter:execute(bat --color=always {} || less -Rf {})" \
+   --preview-window=right:80% \
+   --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" \
+   --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 \
+   --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
 }
 
-# Simple note taker
-note () {
-  # if file doesn't exist, create it
-  if [[ ! -f $HOME/.notes ]]; then
-    touch "$HOME/.notes"
+# Simple note utility
+note() {
+  if [[ ! -f "${HOME}"/.note ]]; then
+    touch "${HOME}/.note"
   fi
-
   if ! (($#)); then
-    # no arguments, print file
-    cat "$HOME/.notes"
+    cat "${HOME}/.note"
+  elif [[ "${1}" == "--help" ]]; then
+    printf "(note) Usage:\n note\t\t\t:print note contents\n note my message\t:add new message to note\n -l\t\t\t:List note\n -c\t\t\t:Clear entire note\n -d\t\t\t:Delete a line from note\n"
+  elif [[ "$1" == "-l" ]]; then
+    printf "\n\t${Cyan}-------- note --------${NC}\n"
+    #nl -b a "${HOME}/.note"
+    cat -n "${HOME}/.note"
+    printf "\n"
   elif [[ "$1" == "-c" ]]; then
-    # clear file
-    printf "%s" > "$HOME/.notes"
+    read -p "Delete all note? Press Enter to continue or ctrl+c to cancel: " null
+    > "${HOME}"/.note
+  elif [[ "$1" == "-d" ]]; then
+    #nl -b a "${HOME}/.note"
+    cat -n "${HOME}/.note"
+    eval printf %.0s- '{1..'"${COLUMNS:-$(tput cols)}"\}; echo
+    read -p "Type a number to remove: " number
+    if [[ -z "${number}" ]]; then
+      echo "No input entered"
+    else
+      sed -i "${number}d" "${HOME}"/.note
+    fi
   else
-    # add all arguments to file
-    printf "%s\n" "$*" >> "$HOME/.notes"
+    printf "%s\n" "$*" >> "${HOME}"/.note
   fi
 }
 
-# Simple task utility
+# Simple todo utility
 todo() {
   if [[ ! -f "${HOME}"/.todo ]]; then
     touch "${HOME}/.todo"
   fi
-
   if ! (($#)); then
     cat "${HOME}/.todo"
+  elif [[ "${1}" == "--help" ]]; then
+    printf "(todo) Usage:\n todo\t\t\t:print todo contents\n todo my message\t:add new message to todo\n -l\t\t\t:List todo\n -c\t\t\t:Clear entire todo\n -d\t\t\t:Delete a line from todo\n"
   elif [[ "$1" == "-l" ]]; then
-    nl -b a "${HOME}/.todo"
+    printf "\n\t${Yellow}-------- date --------\t      -------- todo ---------${NC}\n"
+    cat -n "${HOME}/.todo"
+    printf "\n"
   elif [[ "$1" == "-c" ]]; then
+    read -p "Delete all todo? Press Enter to continue or ctrl+c to cancel: " null
     > "${HOME}"/.todo
-  elif [[ "$1" == "-r" ]]; then
-    nl -b a "${HOME}/.todo"
+  elif [[ "$1" == "-d" ]]; then
+    cat -n "${HOME}/.todo"
     eval printf %.0s- '{1..'"${COLUMNS:-$(tput cols)}"\}; echo
     read -p "Type a number to remove: " number
-    sed -i "${number}d" "${HOME}"/.todo
+    if [[ -z "${number}" ]]; then
+      echo "No input entered"
+    else
+      sed -i "${number}d" "${HOME}"/.todo
+    fi
   else
-    printf "%s\n" "$*" >> "${HOME}"/.todo
+    echo -e "${Cyan}$(date +%A,\ %B\ %d\ \(%I:%M\ %p\)\ )${NC} $* ${NC}" >> "${HOME}"/.todo
   fi
 }
 
 # Write a horizontal line of characters
 hr() {
-  # shellcheck disable=SC2183
-  printf '%*s\n' "${1:-$COLUMNS}" | tr ' ' "${2:-#}"
+  if [[ "$1" == "--help" ]]; then
+    printf "Draws line of characters\n\nUsage:\n  hr <num> <symbol>\n  hr 80 *\n\nhr by itself will fill entire line with #\n"
+  else
+    # shellcheck disable=SC2183
+    printf '%*s\n' "${1:-$COLUMNS}" | tr ' ' "${2:-#}"
+  fi
 }
 
 ## Recycle Bin (safe delete) -----------------------------------------

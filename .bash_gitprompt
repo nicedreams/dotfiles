@@ -3,6 +3,39 @@
 ### GIT PS1 PROMPT
 #------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
+## GIT ALIASES
+#------------------------------------------------------------------------------
+alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
+alias git-logf="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | sed -r -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+ /├\\1─╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m /\\1├─╯\\x1b\\[m/' -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+/├\\1╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m/\\1├╯\\x1b\\[m/' -e 's/╮(\\x1b\\[[0-9;]*m)+\\\\/╮\\1╰╮/' -e 's/╯(\\x1b\\[[0-9;]*m)+\\//╯\\1╭╯/' -e 's/(\\||\\\\)\\x1b\\[m   (\\x1b\\[[0-9;]*m)/╰╮\\2/' -e 's/(\\x1b\\[[0-9;]*m)\\\\/\\1╮/g' -e 's/(\\x1b\\[[0-9;]*m)\\//\\1╯/g' -e 's/^\\*|(\\x1b\\[m )\\*/\\1⎬/g' -e 's/(\\x1b\\[[0-9;]*m)\\|/\\1│/g' | less -r -X +/[^/]HEAD"
+#alias git-lazy='git commit -am "$*" && git push'
+
+#------------------------------------------------------------------------------
+## GIT FUNCTIONS
+#------------------------------------------------------------------------------
+function lazygit() {
+  git status .
+  git add .
+  git commit -m "$1"
+  git push origin HEAD
+}
+
+# Git commit browser
+function git-show() {
+  local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
+  local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always %'"
+#  local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always % | diff-so-fancy'"
+  git log --color=always \
+    --format="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" "$@" | \
+  fzf --no-sort --tiebreak=index --no-multi --reverse --ansi \
+    --header="enter to view, alt-y to copy hash" --preview="$view_commit" \
+    --bind="enter:execute:$view_commit | less -R" \
+    --bind="alt-y:execute:$commit_hash | xclip -selection clipboard"
+}
+
+#------------------------------------------------------------------------------
+## COLORS - Terminal
+#------------------------------------------------------------------------------
 # Normal Colors
 Black='\e[0;30m'        # Black
 Red='\e[0;31m'          # Red
@@ -32,6 +65,76 @@ On_Cyan='\e[46m'        # Cyan
 On_White='\e[47m'       # White
 #
 NC="\e[m"               # Color Reset
+#------------------------------------------------------------------------------
+## COLORS - PS1
+#------------------------------------------------------------------------------
+# PS1 Normal Colors
+PS1_Black='\[\e[0;30m\]'        # Black
+PS1_Red='\[\e[0;31m\]'          # Red
+PS1_Green='\[\e[0;32m\]'        # Green
+PS1_Yellow='\[\e[0;33m\]'       # Yellow
+PS1_Blue='\[\e[0;34m\]'         # Blue
+PS1_Purple='\[\e[0;35m\]'       # Purple
+PS1_Cyan='\[\e[0;36m\]'         # Cyan
+PS1_White='\[\e[0;37m\]'        # White
+# PS1 Bold
+PS1_BBlack='\[\e[1;30m\]'       # Black
+PS1_BRed='\[\e[1;31m\]'         # Red
+PS1_BGreen='\[\e[1;32m\]'       # Green
+PS1_BYellow='\[\e[1;33m\]'      # Yellow
+PS1_BBlue='\[\e[1;34m\]'        # Blue
+PS1_BPurple='\[\e[1;35m\]'      # Purple
+PS1_BCyan='\[\e[1;36m\]'        # Cyan
+PS1_BWhite='\[\e[1;37m\]'       # White
+# PS1 Background
+PS1_On_Black='\[\e[40m\]'       # Black
+PS1_On_Red='\[\e[41m\]'         # Red
+PS1_On_Green='\[\e[42m\]'       # Green
+PS1_On_Yellow='\[\e[43m\]'      # Yellow
+PS1_On_Blue='\[\e[44m\]'        # Blue
+PS1_On_Purple='\[\e[45m\]'      # Purple
+PS1_On_Cyan='\[\e[46m\]'        # Cyan
+PS1_On_White='\[\e[47m\]'       # White
+#
+PS1_BonYellow='\[\e[7;49;33\]'
+#
+PS1_p="\[\033[01;38;5;52m\]p"
+PS1_l="\[\033[01;38;5;124m\]l"
+PS1_a="\[\033[01;38;5;196m\]a"
+PS1_s="\[\033[01;38;5;202m\]s"
+PS1_m="\[\033[01;38;5;208m\]m"
+PS1_a2="\[\033[01;38;5;214m\]a"
+PS1_r="\[\033[01;38;5;220m\]r"
+PS1_o="\[\033[01;38;5;226m\]o"
+PS1_b="\[\033[01;38;5;228m\]b"
+## 256 COLOR CODES
+PS1_NO_FORMAT="\[\033[0m\]"
+PS1_ORANGE_BOLD="\[\033[1;38;5;208m\]"
+PS1_TOXIC_GREEN_BOLD="\[\033[1;38;5;118m\]"
+PS1_RED_BOLD="\[\033[1;38;5;1m\]"
+PS1_CYAN_BOLD="\[\033[1;38;5;87m\]"
+PS1_BLACK_BOLD="\[\033[1;38;5;0m\]"
+PS1_WHITE_BOLD="\[\033[1;38;5;15m\]"
+PS1_GRAY_BOLD="\[\033[1;90m\]"
+PS1_BLUE_BOLD="\[\033[1;38;5;74m\]"
+#
+PS1_NC="\[\e[m\]"               # Color Reset
+#------------------------------------------------------------------------------
+## Symbols / Emoji
+#------------------------------------------------------------------------------
+left_separator=''
+left_separator_black=''
+right_separator=''
+right_separator_black=''
+
+# ↑
+# ↓
+# △
+# ▲
+# ▽
+# ▼
+
+#------------------------------------------------------------------------------
 
 ## export PS1="\$(parse_git_branch)"
 function parse_git_branch() {
@@ -43,7 +146,7 @@ function parse_git_branch() {
       BRANCH="${BPurple}${BRANCH}${NC}"
     fi
     STAT="$(parse_git_dirty)"
-    echo -e "[${BRANCH}${STAT}]"
+    echo -e "[${BRANCH}${STAT}] "
   else
     echo ""
   fi
@@ -58,18 +161,35 @@ function parse_git_dirty {
   renamed="$(echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?")"
   deleted="$(echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?")"
   bits=''
+#  if [ "${renamed}" == "0" ]; then bits="${BRed}>${bits}${NC}"; fi
+#  if [ "${ahead}" == "0" ]; then bits="${BRed}*${bits}${NC}"; fi
+#  if [ "${newfile}" == "0" ]; then bits="${BBlue}+${bits}${NC}"; fi
+#  if [ "${untracked}" == "0" ]; then bits="${BYellow}?${bits}${NC}"; fi
+#  if [ "${deleted}" == "0" ]; then bits="${BRed}x${bits}${NC}"; fi
+#  if [ "${dirty}" == "0" ]; then bits="${BRed}!${bits}${NC}"; fi
+#  if [ ! "${bits}" == "" ]; then echo " ${bits}"; else echo ""; fi
+
   if [ "${renamed}" == "0" ]; then bits="${BRed}>${bits}${NC}"; fi
-  if [ "${ahead}" == "0" ]; then bits="${BRed}*${bits}${NC}"; fi
-  if [ "${newfile}" == "0" ]; then bits="${BBlue}+${bits}${NC}"; fi
+  if [ "${ahead}" == "0" ]; then bits="${BRed}+${bits}${NC}"; fi
+  if [ "${newfile}" == "0" ]; then bits="${BBlue}*${bits}${NC}"; fi
   if [ "${untracked}" == "0" ]; then bits="${BYellow}?${bits}${NC}"; fi
   if [ "${deleted}" == "0" ]; then bits="${BRed}x${bits}${NC}"; fi
   if [ "${dirty}" == "0" ]; then bits="${BRed}!${bits}${NC}"; fi
   if [ ! "${bits}" == "" ]; then echo " ${bits}"; else echo ""; fi
 }
 
+# -------------------------------------------------------------------
+# Append to current PS1
+export PS1="$PS1\$(parse_git_branch)"
+
+# -------------------------------------------------------------------
 # Set PS1 color depending on root or user
-if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="${BRed}"; else PS1_USER_COLOR="${BGreen}"; fi
+#if [[ "$UID" -eq 0 ]]; then PS1_USER_COLOR="${BRed}"; else PS1_USER_COLOR="${BGreen}"; fi
+
 # Style: [hostname](username)[master !]~$
-#export PS1="${debian_chroot:+($debian_chroot)}[${BYellow}\h${NC}](${PS1_USER_COLOR}\u${NC})\$(parse_git_branch)${BBlue}\w${NC}\$ "
 #export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;33m\]\h\[\e[m\]](\[${PS1_USER_COLOR}\]\u\[\e[m\])\$(parse_git_branch)\[\e[1;34m\]\w\[\e[m\]\\$ "
-export PS1="${debian_chroot:+($debian_chroot)}[\[${BYellow}\]\h\[${NC}\]](\[${PS1_USER_COLOR}\]\u\[${NC}\])\$(parse_git_branch)\[${BBlue}\]\w\[${NC}\]\\$ "
+#export PS1="${debian_chroot:+($debian_chroot)}[\[${BYellow}\]\h\[${NC}\]](\[${PS1_USER_COLOR}\]\u\[${NC}\])\$(parse_git_branch)\[${BBlue}\]\w\[${NC}\]\\$ "
+
+# Style: Powerline
+#export PS1="${debian_chroot:+($debian_chroot)}${PS1_BonYellow}\h${PS1_NC}${PS1_BBlack}${PS1_On_Yellow}${left_separator_black}${PS1_BBlack}${PS1_On_Green}\u${PS1_NC}${left_separator_black}${PS1_BBlack}${PS1_On_Blue}\w${PS1_NC}\\$
+#export PS1="\[\e[37;1m\]\[\] \u \[\e[0m\]\[\]\[\e[0m\]\[\] \w \[\e[0m\]\[\]"
