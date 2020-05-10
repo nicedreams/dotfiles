@@ -11,6 +11,7 @@
 AUTO_LOGIN_TMUX="N"             # auto login to tmux session
 #--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
 DISPLAY_TMUX="Y"                # shows if tmux has open sessions at login
+POWERLINE_PROMPT="N"            # use powerline PS1 theme
 DISPLAY_GREETING="N"            # shows greeting with info
 DISPLAY_GREETING_WEATHER="N"    # shows weather in greeting
 DISPLAY_GREETING_BASHINFO="N"   # shows weather in greeting
@@ -51,10 +52,35 @@ On_White='\e[47m'       # White
 #
 NC="\e[m"               # Color Reset
 
-alias nano='vim'
-
 # Get color variable depending on root(red) or user(green)
 if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
+
+#------------------------------------------------------------------------------
+## POWERLINE PROMPT (Override default prompt)
+#------------------------------------------------------------------------------
+if [[ "${POWERLINE_PROMPT}" == "Y" ]]; then
+  # Get color variable depending on root(red) or user(green)
+  if [[ "$UID" -eq 0 ]]; then
+    export PS1COL1="${On_Red}"
+    export PS1COL2="${Red}"
+  else
+    export PS1COL1="${On_Green}"
+    export PS1COL2="${Green}"
+  fi
+ 
+  # user > path
+  #PS1="\[\033[0;30m\]\[\033[${PS1COL1}\] \u \[\033[0m\]\[\033[0;${PS1COL2}\]\[\033[44m\]\[\033[0;34m\]\[\033[44m\]\[\033[0;30m\]\[\033[44m\] \w \[\033[30m\]\[\033[0;34m\]\[\033[0;0m\] "
+
+  # user > hostname > path
+  #PS1="\[\033[0;30m\]\[\033[${PS1COL1}\] \u \[\033[0m\]\[\033[0;${PS1COL2}\]\[\033[43m\]\[\033[0;30m\]\[\033[43m\] \h \[\033[0m\]\[\033[0;33m\]\[\033[44m\]\[\033[0;34m\]\[\033[44m\]\[\033[0;30m\]\[\033[44m\] \w \[\033[0m\]\[\033[0;34m\]\[\033[0;0m\] "
+
+  # hostname > user > path
+  #PS1="${Black}${On_Yellow} \h${Yellow}${On_Green}${BBlack} \u${Green}${On_Blue}${On_Blue}${BBlack} \w${Blue}${BWhite} "
+  PS1="${Black}${On_Yellow}${BWhite} \h${Yellow}${PS1COL1}${BWhite} \u${PS1COL2}${On_Blue}${On_Blue}${BWhite} \w${Blue}${BWhite} "
+  #PS1="${Black}${On_White}${BBlack} \h${White}${PS1COL1}${BBlack} \u${PS1COL2}${On_Blue}${On_Blue}${BBlack} \w${Blue}${BWhite} "
+
+  if [[ -e "$HOME"/.bash_gitprompt ]]; then export POWERLINEPS1="Y"; source "$HOME"/.bash_gitprompt; fi
+fi
 
 #------------------------------------------------------------------------------
 ## WINDOW TITLE Prevent messed up terminal-window titles

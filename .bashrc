@@ -14,7 +14,7 @@ case $- in *i*) ;; *) return;; esac
 export HISTSIZE=2000
 export HISTFILESIZE=5000
 export HISTCONTROL=ignoreboth  # don't put duplicate lines in the history. [=ignoredups:erasedups | =ignoreboth]
-export HISTTIMEFORMAT='%F %T  '
+export HISTTIMEFORMAT='%F %T '
 export HISTFILE=~/.bash_history
 export HISTIGNORE="history*:pwd:ls:l:ll:exit:sensor*:cd:note:todo:tmux:tmux-ns:tmux-hn:nmon:htop:ranger"
 export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"  # After each command, append to the history file and reread it
@@ -73,10 +73,10 @@ fi
 #------------------------------------------------------------------------------
 if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
   # Get color variable depending on root(red) or user(green)
-  if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
+  if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;91m"; else export PS1_USER_COLOR="\e[1;92m"; fi
 
   # Set PS1 color depending on root(red) or user(green)
-  export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;33m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [hostname](username)~$
+  export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;93m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;36m\]\w\[\e[m\]\\$ "  # Style: [hostname](username)~$
   #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1_USER_COLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
@@ -122,8 +122,15 @@ fi
 #------------------------------------------------------------------------------
 # LESS
 #------------------------------------------------------------------------------
-export LESS="-JMQR#3NSi~"
+#export LESS="-JMQR#3NSi~"
 #export LESS="-JMQRNSi"
+#export LESS="-JMQRSni"
+
+#------------------------------------------------------------------------------
+# DEFAULT EDITOR / VIEWER
+#------------------------------------------------------------------------------
+export EDITOR="vim"
+export PAGER="vim"
 
 #------------------------------------------------------------------------------
 # ALIASES
@@ -131,12 +138,13 @@ export LESS="-JMQR#3NSi~"
 diff='diff --color'
 #command -v colordiff &> /dev/null && alias diff='colordiff'
 command -v curl &> /dev/null && alias get-wanip="curl http://ipecho.net/plain; echo"
-command -v tmux &> /dev/null && alias tmux-hn='tmux a -t ${HOSTNAME} || tmux new-session -s ${HOSTNAME}'
+command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
 command -v fzf &> /dev/null && alias preview='fzf --height=60% --preview-window=right:60% --layout=reverse --preview="bat -p --color=always --line-range 1:100 {} || head -100"'
 alias top='top -E g'
 alias ps='ps -auxf'
-alias psg="ps aux | grep -v grep | grep -i -e VSZ -e"
-alias histg="history | grep"
+alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
+alias histg='history | grep'
+alias hgrep='history | grep'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'

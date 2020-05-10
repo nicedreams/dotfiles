@@ -5,12 +5,16 @@
 ### FUNCTIONS
 #------------------------------------------------------------------------------
 
-# Make your directories and files access rights sane. Recursively give directories read&execute and files read privileges:
+# The default umask 002 used for normal user / default umask for the root user is 022
+# umask of 022 allows only you to write data, but anyone can read data. / umask of 002 is good when you share data with other users in the same group.
+# umask of 077 is good for a completely private system. No other user can read or write your data.
 #function tools-reset-permissions() { find "$@" -type d -exec chmod 0755 {} \; && find "$@" -type f -exec chmod 0664 {} \; ;}
-function tools-reset-permissions() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664;}
+function tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664; }
+function tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
 
 # Show formatted ps of user processes
 function tools-ps-user() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
+function psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 
 # dmesg export to file
 function tools-dmesg-file { dmesg > /root/dmesg."$(date +%m.%d.%Y)".txt; }
@@ -110,18 +114,14 @@ esac
 }
 
 ### Compress files based on extension ---------------------------------------------------------
-function tools-compress() {
+function compress() {
    FILE=$1
    shift
    case $FILE in
-      *.tar)     tar cvf  $FILE $* ;;
-      *.tar.gz)  tar czvf $FILE $* ;;
-      *.gzip)    tar czvf $FILE $* ;;
-      *.tgz)     tar czvf $FILE $* ;;
-      *.tar.bz2) tar cjvf $FILE $* ;;
-      *.bz2)     tar cjvf $FILE $* ;;
-      *.tar.xz)  tar cJvf $FILE $* ;;
-      *.xz)      tar cJvf $FILE $* ;;
+      *.tar)     tar -cvf  $FILE $* ;;
+      *.tar.gz|*.gzip|*.tgz)  tar -czvf $FILE $* ;;
+      *.tar.bz2|*.bz2) tar -cjvf $FILE $* ;;
+      *.tar.xz|*.xz)  tar -cJvf $FILE $* ;;
       *.zip)     zip $FILE $* ;;
       *.rar)     rar $FILE $* ;;
       *)         echo "Filetype not recognized" ;;
@@ -129,7 +129,7 @@ function tools-compress() {
 }
 
 ### Universal extract files -----------------------------------------------------------------------
-function tools-extract {
+function extract {
   if [ -z "$1" ]; then
     # display usage if no parameters given
     echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
@@ -140,16 +140,14 @@ function tools-extract {
     do
       if [ -f "$n" ] ; then
           case "${n%,}" in
-            *.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar)
-                         tar xvf "$n"       ;;
+            *.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar)    tar -xvf "$n"    ;;
             *.lzma)      unlzma ./"$n"      ;;
             *.bz2)       bunzip2 ./"$n"     ;;
             *.rar)       unrar x -ad ./"$n" ;;
             *.gz)        gunzip ./"$n"      ;;
             *.zip)       unzip ./"$n"       ;;
             *.z)         uncompress ./"$n"  ;;
-            *.7z|*.arj|*.cab|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.rpm|*.udf|*.wim|*.xar)
-                         7z x ./"$n"        ;;
+            *.7z|*.arj|*.cab|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.rpm|*.udf|*.wim|*.xar)    7z x ./"$n"    ;;
             *.xz)        unxz ./"$n"        ;;
             *.exe)       cabextract ./"$n"  ;;
             *)
@@ -164,3 +162,4 @@ function tools-extract {
     done
   fi
 }
+

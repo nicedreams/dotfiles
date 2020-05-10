@@ -163,10 +163,11 @@ set editor = "nano"        # Use terminal Nano to compose email.
 
 # Dracula
 #source ~/.mutt/colors-dracula.muttrc
-source ~/.mutt/mutt-colors-solarized-light-256.muttrc
+#source ~/.mutt/mutt-colors-solarized-light-256.muttrc
+source ~/.mutt/colors-gruvbox-shuber.muttrc
 
 # Custom Colors ---------------------------------------
-color index blue default "~N"           # unread messages
+#color index blue default "~N"           # unread messages
 #color index green default "~N~F"        # unread flagged messages
 #color index red   default "~F"          # flagged messages
 #color index green default "~v~(~N)"     # collapsed thread with unread

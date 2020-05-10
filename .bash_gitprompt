@@ -134,6 +134,21 @@ right_separator_black=''
 # ▽
 # ▼
 
+# echo -e "\ue0b0 \u00b1 \ue0a0 \u27a6 \u2718 \u26a1 \u2699"
+#  ±  ➦ ✘ ⚡ ⚙
+
+#------------------------------------------------------------------------------
+#    + - New files were added
+#    ! - Existing files were modified
+#    ? - Untracked files exist that are not ignored
+#    » - Current changes include file renaming
+#    ✘ - An existing tracked file has been deleted
+#    $ - There are currently stashed files
+#    = - There are unmerged files
+#    up arrow - Branch is ahead of the remote (indicating a push is needed)
+#    down arrow - Branch is behind the remote (indicating a pull is needed)
+#    up/down arrow - The branches have diverged (indicating history has changed and maybe a force-push is needed)
+#    check mark - The current working directory is clean
 #------------------------------------------------------------------------------
 
 ## export PS1="\$(parse_git_branch)"
@@ -143,12 +158,11 @@ function parse_git_branch() {
     if [ "${BRANCH}" == "master" ]; then
       BRANCH="${BGreen}${BRANCH}${NC}"
     else
-      BRANCH="${BPurple}${BRANCH}${NC}"
+      BRANCH="${Purple}${BRANCH}${NC}"
     fi
     STAT="$(parse_git_dirty)"
     echo -e "[${BRANCH}${STAT}] "
-  else
-    echo ""
+#    echo -e "${Cyan}${On_Cyan} ${BWhite} ${BRANCH}${STAT}${Cyan}${BWhite} "
   fi
 }
 
