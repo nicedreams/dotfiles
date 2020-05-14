@@ -121,14 +121,6 @@ alias git-logf="git --no-pager log --all --color=always --graph --abbrev-commit 
 #------------------------------------------------------------------------------
 ## GIT FUNCTIONS
 #------------------------------------------------------------------------------
-lazygit() {
-  git status .
-  git add .
-  git commit -m "$1"
-  git push origin HEAD
-}
-
-#------------------------------------------------------------------------------
 # Git commit browser
 git-show() {
   local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
