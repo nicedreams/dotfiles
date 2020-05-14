@@ -10,14 +10,15 @@
 #------------------------------------------------------------------------------
 AUTO_LOGIN_TMUX="N"             # auto login to tmux session
 #--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
-DISPLAY_TMUX="Y"                # shows if tmux has open sessions at login
+DISPLAY_TMUX="Y"                # displays if tmux has open sessions at login
 POWERLINE_PROMPT="N"            # use powerline PS1 theme
-DISPLAY_GREETING="N"            # shows greeting with info
-DISPLAY_GREETING_WEATHER="N"    # shows weather in greeting
-DISPLAY_GREETING_BASHINFO="N"   # shows weather in greeting
+DISPLAY_GREETING="N"            # displays greeting with info
+DISPLAY_GREETING_WEATHER="N"    # displays weather in greeting
+DISPLAY_GREETING_SSH="Y"        # displays ip of ssh client
+DISPLAY_GREETING_BASHINFO="N"   # displays weather in greeting
 START_SSH_AGENT="N"             # start ssh-agent at login if not already running
-DISPLAY_NOTE="Y"                # shows contents of ~/.note
-DISPLAY_TODO="Y"                # shows contents of ~/.todo
+DISPLAY_NOTE="Y"                # displays contents of ~/.note
+DISPLAY_TODO="Y"                # displays contents of ~/.todo
 
 #------------------------------------------------------------------------------
 ### COLORS
@@ -51,9 +52,54 @@ On_Cyan='\e[46m'        # Cyan
 On_White='\e[47m'       # White
 #
 NC="\e[m"               # Color Reset
+#------------------------------------------------------------------------------
 
-# Get color variable depending on root(red) or user(green)
+#------------------------------------------------------------------------------
+# Alias vi to vim if installed
+#------------------------------------------------------------------------------
+command -v vim &> /dev/null && alias vi='vim'
+
+#------------------------------------------------------------------------------
+## Source custom prompt from file if exists
+#------------------------------------------------------------------------------
+if [[ -e "$HOME"/.bash_fancyprompt ]]; then
+  source "$HOME"/.bash_fancyprompt
+elif [[ -e "$HOME"/.bash_gitprompt ]]; then
+  source "$HOME"/.bash_gitprompt
+fi
+
+#------------------------------------------------------------------------------
+## Get color variable depending on root(red) or user(green)
+#------------------------------------------------------------------------------
 if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
+
+#------------------------------------------------------------------------------
+# git alias/functions
+#------------------------------------------------------------------------------
+alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
+alias git-logf="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | sed -r -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+ /├\\1─╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m /\\1├─╯\\x1b\\[m/' -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+/├\\1╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m/\\1├╯\\x1b\\[m/' -e 's/╮(\\x1b\\[[0-9;]*m)+\\\\/╮\\1╰╮/' -e 's/╯(\\x1b\\[[0-9;]*m)+\\//╯\\1╭╯/' -e 's/(\\||\\\\)\\x1b\\[m   (\\x1b\\[[0-9;]*m)/╰╮\\2/' -e 's/(\\x1b\\[[0-9;]*m)\\\\/\\1╮/g' -e 's/(\\x1b\\[[0-9;]*m)\\//\\1╯/g' -e 's/^\\*|(\\x1b\\[m )\\*/\\1⎬/g' -e 's/(\\x1b\\[[0-9;]*m)\\|/\\1│/g' | less -r -X +/[^/]HEAD"
+#alias git-lazy='git commit -am "$*" && git push'
+
+git-lazy() {
+  git status .
+  git add .
+  git commit -m "$1"
+  git push origin HEAD
+}
+
+#------------------------------------------------------------------------------
+# Git commit browser
+git-show() {
+  local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
+  local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always %'"
+#  local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always % | diff-so-fancy'"
+  git log --color=always \
+    --format="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" "$@" | \
+  fzf --no-sort --tiebreak=index --no-multi --reverse --ansi \
+    --header="enter to view, alt-y to copy hash" --preview="$view_commit" \
+    --bind="enter:execute:$view_commit | less -R" \
+    --bind="alt-y:execute:$commit_hash | xclip -selection clipboard"
+}
 
 #------------------------------------------------------------------------------
 ## POWERLINE PROMPT (Override default prompt)
@@ -67,18 +113,14 @@ if [[ "${POWERLINE_PROMPT}" == "Y" ]]; then
     export PS1COL1="${On_Green}"
     export PS1COL2="${Green}"
   fi
- 
   # user > path
   #PS1="\[\033[0;30m\]\[\033[${PS1COL1}\] \u \[\033[0m\]\[\033[0;${PS1COL2}\]\[\033[44m\]\[\033[0;34m\]\[\033[44m\]\[\033[0;30m\]\[\033[44m\] \w \[\033[30m\]\[\033[0;34m\]\[\033[0;0m\] "
-
   # user > hostname > path
   #PS1="\[\033[0;30m\]\[\033[${PS1COL1}\] \u \[\033[0m\]\[\033[0;${PS1COL2}\]\[\033[43m\]\[\033[0;30m\]\[\033[43m\] \h \[\033[0m\]\[\033[0;33m\]\[\033[44m\]\[\033[0;34m\]\[\033[44m\]\[\033[0;30m\]\[\033[44m\] \w \[\033[0m\]\[\033[0;34m\]\[\033[0;0m\] "
-
   # hostname > user > path
   #PS1="${Black}${On_Yellow} \h${Yellow}${On_Green}${BBlack} \u${Green}${On_Blue}${On_Blue}${BBlack} \w${Blue}${BWhite} "
   PS1="${Black}${On_Yellow}${BWhite} \h${Yellow}${PS1COL1}${BWhite} \u${PS1COL2}${On_Blue}${On_Blue}${BWhite} \w${Blue}${BWhite} "
   #PS1="${Black}${On_White}${BBlack} \h${White}${PS1COL1}${BBlack} \u${PS1COL2}${On_Blue}${On_Blue}${BBlack} \w${Blue}${BWhite} "
-
   if [[ -e "$HOME"/.bash_gitprompt ]]; then export POWERLINEPS1="Y"; source "$HOME"/.bash_gitprompt; fi
 fi
 
@@ -124,7 +166,7 @@ if [[ ! -r "$HOME"/.hushlogin ]]; then touch "$HOME"/.hushlogin; fi
 ### MAIL
 #------------------------------------------------------------------------------
 # Check for new mail at login if not =0 and wait ## seconds before mail checks
-MAILCHECK=60
+MAILCHECK=10
 #if [ -d $HOME/Maildir/ ]; then
 #  export MAIL=$HOME/Maildir/
 #  export MAILPATH=$HOME/Maildir/
@@ -136,8 +178,8 @@ MAILCHECK=60
 #------------------------------------------------------------------------------
 ### Default editor
 #------------------------------------------------------------------------------
-export VISUAL="vim"
-export EDITOR="vim"
+export VISUAL="vi"
+export EDITOR="vi"
 
 #------------------------------------------------------------------------------
 ### MAN Command Options
@@ -225,8 +267,11 @@ if [[ "${DISPLAY_GREETING}" == "Y" ]]; then
         weather_report="$(curl -s "http://rss.accuweather.com/rss/liveweather_rss.asp?metric=2&locCode=85226" | sed -n '/Currently:/ s/.*: \(.*\): \([0-9]*\)\([CF]\).*/\2°\3, \1/p')"
         printf "%s${BGreen}The weather is ${weather_report} in Chandler, AZ${NC}.\n"                                    # print local weather
       fi
-      if [[ "${DISPLAY_GREETING_BASHINFO}" == "Y" ]]; then
+       if [[ "${DISPLAY_GREETING_BASHINFO}" == "Y" ]]; then
         printf "%s${BCyan}This is BASH ${BRed}${BASH_VERSION%.*}${BCyan}\nDISPLAY on ${BRed}$DISPLAY${NC}\n"             # print bash version and display
+      fi
+      if [[ "${DISPLAY_GREETING_SSH}" == "Y" ]]; then
+        if [[ -n "${SSH_CLIENT}" ]]; then echo "Logging in from: ${SSH_CLIENT%% *}"; fi
       fi
     fi
   else
@@ -253,10 +298,6 @@ if [[ "${DISPLAY_TODO}" == "Y" ]]; then
     cat ~/.todo
   fi
 fi
-
-### Use dircolors if exist
-#------------------------------------------------------------------------------
-[[ -e "$HOME"/.dircolors ]] && eval "$(dircolors --sh $HOME/.dircolors)"
 
 ### fzf util for bash (https://github.com/junegunn/fzf)
 #------------------------------------------------------------------------------
@@ -298,7 +339,7 @@ assh() {
 }
 
 # rsync .bash* from kenserver to local home
-alias ken-rsync-dotfiles-kenserver="rsync -avh --progress ken@192.168.2.10:/home/ken/{.bashrc,.bash_aliases,.bash_functions,.bash_kenrc,.bash_gitprompt,.tmux*,.vim*,.mutt*} ${HOME}/"
+alias ken-rsync-dotfiles-kenserver="rsync -avh --progress ken@192.168.2.10:/home/ken/{.bashrc,.bash_aliases,.bash_functions,.bash_kenrc,.bash_gitprompt,.bash_fancyprompt,.tmux*,.vim*,.mutt*} ${HOME}/"
 
 # open vimwiki
 alias vim-wiki='vim -c VimwikiIndex'

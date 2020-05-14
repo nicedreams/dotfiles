@@ -1,13 +1,17 @@
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" KEN CUSTOM ~/.vimrc
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" ~/.vimrc
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" non-Plugin config below
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 "" Change vim leader
 let mapleader = ","
 
-""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" ColorScheme (ls -l /usr/share/vim/vim*/colors/)
-""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "let g:solarized_termcolors=256
 "colorscheme solarized
 "colorscheme simple-dark
@@ -16,66 +20,13 @@ let mapleader = ","
 "colorscheme onedark
 colorscheme gruvbox
 
-"" Using VIM8 built-in plugin-in manager
-"""""""""""""""""""""""""""""""""""
-"" LIGHTLINE PLUGIN
-
-let g:lightline = {
-  \ 'colorscheme': 'wombat',
-  \ 'active': {
-  \   'left': [ [ 'mode', 'paste' ],
-  \             [ 'readonly', 'filename', 'modified', 'helloworld' ] ]
-  \ },
-  \ 'component': {
-  \   'helloworld': 'Hello, world!'
-  \ },
-  \ }
-
-"""""""""""""""""""""""""""""""""""""""""
-"" FZF PLUGIN
-
-set rtp+=~/.fzf
-
-" Mapping selecting mappings
-nmap <leader><tab> <plug>(fzf-maps-n)
-xmap <leader><tab> <plug>(fzf-maps-x)
-omap <leader><tab> <plug>(fzf-maps-o)
-
-" Insert mode completion
-imap <c-x><c-k> <plug>(fzf-complete-word)
-imap <c-x><c-f> <plug>(fzf-complete-path)
-imap <c-x><c-j> <plug>(fzf-complete-file-ag)
-imap <c-x><c-l> <plug>(fzf-complete-line)
-
-" Advanced customization using Vim function
-inoremap <expr> <c-x><c-k> fzf#vim#complete#word({'left': '15%'})
-
-" Replace the default dictionary completion with fzf-based fuzzy completion
-inoremap <expr> <c-x><c-k> fzf#vim#complete('cat /usr/share/dict/words')
-
-""""""""""""""""""""""""""""""""""""""""""
-"" NERDTree PLUGIN
-
-let g:NERDTreeShowHidden = 1
-let g:NERDTreeMinimalUI = 1
-let g:NERDTreeIgnore = []
-let g:NERDTreeStatusline = ''
-" Automaticaly close nvim if NERDTree is only thing left open
-autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-" Toggle
-nnoremap <silent> <C-e> :NERDTreeToggle<CR>
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" Source config files if exists
+if filereadable($HOME . "/.vim/plugins.vim")
+  source ~/.vim/plugins.vim
+endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" non-Plugin config below
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-""""""""""""""""""""""""""""""""""""""""""""
-"" Use local config if it exists
-"if filereadable($HOME . "/.vimrc.local")
-"  source ~/.vimrc.local
-"endif
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Automatically make needed files and folders on first run
 "call system("mkdir -p $HOME/.vim/{swap,undo}")
 "if !filereadable($HOME . "/.vimrc.plugins") | call system("touch $HOME/.vimrc.plugins") | endif
@@ -83,7 +34,7 @@ nnoremap <silent> <C-e> :NERDTreeToggle<CR>
 "if !filereadable($HOME . "/.vimrc.last") | call system("touch $HOME/.vimrc.last") | endif
 
 
-""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" HOTKEYS
 
 map <leader>- :set splitbelow<CR>
@@ -106,7 +57,7 @@ map <leader>p :prev<CR>
 "" to handle exiting insert mode via a control-C
 inoremap <c-c> <c-o>:call InsertLeaveActions()<cr><c-c>
 
-""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" PASTE MODE (Auto set/unset vims paste mode)
 let &t_SI .= "\<Esc>[?2004h"
 let &t_EI .= "\<Esc>[?2004l"
@@ -119,7 +70,7 @@ function! XTermPasteBegin()
   return ""
 endfunction
 
-""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" PASTE MODE (Fix for Tmux)
 function! WrapForTmux(s)
   if !exists('$TMUX')
@@ -146,7 +97,7 @@ inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
 "" toggle paste/nopaste
 set pastetoggle=<F2>
 
-""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" split navigations
 
 "nnoremap <C-J> <C-W><C-J>
@@ -154,7 +105,7 @@ set pastetoggle=<F2>
 "nnoremap <C-L> <C-W><C-L>
 "nnoremap <C-H> <C-W><C-H>
 
-"""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Moving around
 " Buffer switching left, down, up, right
 map <c-h> <c-w>h
@@ -205,7 +156,7 @@ map <D-8> 8gt
 map <D-9> 9gt
 map <D-0> :tablast<CR>
 
-""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Enable folding
 
 set foldmethod=indent
@@ -214,7 +165,7 @@ set foldlevel=99
 "" Enable folding with the spacebar
 nnoremap <space> za
 
-"""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Custom options per file type
 
 au BufNewFile,BufRead *.py
@@ -245,7 +196,7 @@ autocmd BufRead,BufNewFile gitconfig.local set filetype=gitconfig
 autocmd BufRead,BufNewFile tmux.conf.local set filetype=tmux
 autocmd BufRead,BufNewFile vimrc.local set filetype=vim
 
-"""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Settings
 
 set list listchars=eol:$,trail:∙ listchars+=tab:│\  fillchars+=vert:│,fold:\
@@ -280,7 +231,7 @@ set cursorline          " underlines the line where the cursor is
 set showmode
 set showcmd
 
-"""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Line Numbers
 
 set number              " show line numbers
@@ -289,14 +240,13 @@ nmap <C-N> :set invnumber<CR>
 "noremap <F3> :set invnumber<CR>
 "inoremap <F3> <C-O>:set invnumber<CR>
 
-
-"""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Line wrapping
 
 set nowrap            " no wrap lines
 "set showbreak=\ \ \ \ " indent wrapped lines
 
-"""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Search settings
 
 set matchtime=2       " time to blink match {}
@@ -320,7 +270,7 @@ nnoremap g# g#zz
 nnoremap <cr> :noh<CR><CR>:<backspace>
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Miscellaneous
 
 set mouse=a           " enable mouse support
@@ -341,7 +291,7 @@ set wildignore+=*.tar.*
 set wildignorecase
 set wildmode=full
 
-""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Tab/Space settings
 
 set tabstop=2         " width that a <TAB> character displays as
@@ -351,14 +301,14 @@ set shiftwidth=2      " number of spaces to use for each step of (auto)indent
 set autoindent        " copy indent from current line when starting a new line
 set smartindent       " even better autoindent (e.g. add indent after '{')
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Whitespace
 
 "set textwidth=79
 "set formatoptions=tcqrn1
 set noshiftround
 
-"""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" COLOR OPTIONS
 
 noh
@@ -370,7 +320,7 @@ endif
 
 set background=dark       " Use a dark background
 
-"""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" COMPLETION
 
 " better completion menu (tab | tab/shift-tab)
@@ -491,13 +441,13 @@ set statusline+=%1*\ ln:\ %02l/%L\ (%3p%%)\                " Line number / total
 "set statusline+=%0*\ %{toupper(g:currentmode[mode()])}\    " The current mode (function 1)
 ""#########################################################################
 
-""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" CUSTOM COLORS
 
 " https://vim.fandom.com/wiki/Change_statusline_color_to_show_insert_or_normal_mode
 
 " Set StatusLine colors to change when enter/leave modes
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Custom StatusLine theme
 "au InsertEnter * hi StatusLine ctermbg=223 ctermfg=31
 "au InsertLeave * hi StatusLine ctermbg=223 ctermfg=239
@@ -514,7 +464,7 @@ hi statusline ctermbg=255 ctermfg=31
 au InsertEnter * hi StatusLine ctermbg=255 ctermfg=41
 au InsertLeave * hi StatusLine ctermbg=255 ctermfg=31
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Highlight CursorLine when enter/leaving modes
 " Highlight CursorLine when enter/leaving modes
 "hi CursorLine ctermbg=237 cterm=none
@@ -527,41 +477,11 @@ au InsertEnter * hi CursorLine ctermbg=236 ctermfg=none
 au InsertLeave * hi CursorLine ctermbg=31 ctermfg=none
 hi CursorLine                  ctermbg=31 ctermfg=none
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Change color used for line numbers
 "hi LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Custom status bar colors for vim-buffet plugin
-function! g:BuffetSetCustomColors()
-  hi! BuffetBuffer cterm=NONE ctermbg=235 ctermfg=223           " a non-current and non-active buffer (bar color)
-  hi! BuffetCurrentBuffer cterm=NONE ctermbg=31 ctermfg=223     " the current buffer
-  hi! BuffetActiveBuffer cterm=NONE ctermbg=1 ctermfg=223       " an active buffer (a non-current buffer visible in a non-current window)
-  hi! BuffetModCurrentBuffer cterm=NONE ctermbg=31 ctermfg=223  " the current buffer when modified
-  hi! BuffetModActiveBuffer cterm=NONE ctermbg=4 ctermfg=223    " a modified active buffer (a non-current buffer visible in a non-current window)
-  hi! BuffetModBuffer cterm=NONE ctermbg=5 ctermfg=223          " a modified non-current and non-active buffer
-  hi! BuffetTrunc cterm=NONE ctermbg=6 ctermfg=223              " the truncation indicator (count of truncated buffers from the left or right)
-  hi! BuffetTab cterm=NONE ctermbg=41 ctermfg=223               " a tab
-endfunction
-
-let g:buffet_always_show_tabline = 0
-let g:buffet_powerline_separators = 0
-let g:buffet_separator = ""
-let g:buffet_show_index = 1
-let g:buffet_use_devicons = 1
-
-nmap <leader>1 <Plug>BuffetSwitch(1)
-nmap <leader>2 <Plug>BuffetSwitch(2)
-nmap <leader>3 <Plug>BuffetSwitch(3)
-nmap <leader>4 <Plug>BuffetSwitch(4)
-nmap <leader>5 <Plug>BuffetSwitch(5)
-nmap <leader>6 <Plug>BuffetSwitch(6)
-nmap <leader>7 <Plug>BuffetSwitch(7)
-nmap <leader>8 <Plug>BuffetSwitch(8)
-nmap <leader>9 <Plug>BuffetSwitch(9)
-nmap <leader>0 <Plug>BuffetSwitch(10)
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" CUSTOM COLORS
 
 "hi pmenu ctermbg=0 ctermfg=NONE
@@ -580,7 +500,7 @@ nmap <leader>0 <Plug>BuffetSwitch(10)
 "highlight Special ctermbg=DarkMagenta
 "highlight Cursor ctermbg=Green
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" USER DEFINED COLORS
 
 hi User1 ctermfg=007 ctermbg=239 guibg=#4e4e4e guifg=#adadad
