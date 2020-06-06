@@ -213,7 +213,7 @@ prompt_context() {
       #prompt_segment black red "\u"$(echo -e '\e[1;37m')"@"$(echo -e '\e[1;33m')"\h""$(echo -e '\e[m')"
       #prompt_segment black red "\u@\h"
       prompt_segment lgrey black "💻\h"
-      prompt_segment red black "👷\u"
+      prompt_segment red white "👷\u"
     else
       #prompt_segment black green "\u"$(echo -e '\e[1;37m')"@"$(echo -e '\e[1;33m')"\h""$(echo -e '\e[m')"
       #prompt_segment black green "\u@\h"
@@ -279,11 +279,11 @@ prompt_dir() {
 # PS1: second line
 prompt_secondline() {
   PR="$PR\n"
-  prompt_segment lgrey
-  prompt_segment grey
-  prompt_segment dgrey
-  prompt_segment black bwhite
-  PR="$PR\\$ "
+#  prompt_segment dgrey
+#  prompt_segment grey
+#  prompt_segment lgrey
+#  prompt_segment black bwhite
+#  PR="$PR\\$ "
 }
 
 # --------------------------------------------------------------------
@@ -319,12 +319,12 @@ prompt_status() {
 # --------------------------------------------------------------------
 build_prompt() {
   prompt_status            # show status symbols if active
-  prompt_histdt            # show last command history number and time ran HH:MM
+  #prompt_histdt            # show last command history number and time ran HH:MM
   #prompt_bracket           # show > bracket divider
   #prompt_ssh               # show on PS1 if connected via ssh
   prompt_context           # show user and hostname
   prompt_dir               # show full directory path
-  #prompt_virtualenv        # show if virtual environment
+  prompt_virtualenv        # show if virtual environment
   prompt_git               # show if directory is git repo and displays branch and status icons
   prompt_end               # end of prompt (do not disable/comment)
   #prompt_secondline       # enable 2nd line PS1 for commands

@@ -1,17 +1,17 @@
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" ~/.vimrc
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ ~/.vimrc                                                                   ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" non-Plugin config below
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ non-plugin config below                                                    ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 
 "" Change vim leader
 let mapleader = ","
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" ColorScheme (ls -l /usr/share/vim/vim*/colors/)
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ ColorScheme (ls -l /usr/share/vim/vim*/colors/)                            ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 "let g:solarized_termcolors=256
 "colorscheme solarized
 "colorscheme simple-dark
@@ -20,23 +20,24 @@ let mapleader = ","
 "colorscheme onedark
 colorscheme gruvbox
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Source config files if exists
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ Source config files if exists                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 if filereadable($HOME . "/.vim/plugins.vim")
   source ~/.vim/plugins.vim
 endif
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Automatically make needed files and folders on first run
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ Automatically make needed files and folders on first run                   ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 "call system("mkdir -p $HOME/.vim/{swap,undo}")
 "if !filereadable($HOME . "/.vimrc.plugins") | call system("touch $HOME/.vimrc.plugins") | endif
 "if !filereadable($HOME . "/.vimrc.first") | call system("touch $HOME/.vimrc.first") | endif
 "if !filereadable($HOME . "/.vimrc.last") | call system("touch $HOME/.vimrc.last") | endif
 
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" HOTKEYS
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ HOTKEYS                                                                    ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 map <leader>- :set splitbelow<CR>
 map <leader>% :set splitright<CR>
 
@@ -57,8 +58,9 @@ map <leader>p :prev<CR>
 "" to handle exiting insert mode via a control-C
 inoremap <c-c> <c-o>:call InsertLeaveActions()<cr><c-c>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" PASTE MODE (Auto set/unset vims paste mode)
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ PASTE MODE (Auto set/unset vims paste mode)                                ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 let &t_SI .= "\<Esc>[?2004h"
 let &t_EI .= "\<Esc>[?2004l"
 
@@ -70,8 +72,9 @@ function! XTermPasteBegin()
   return ""
 endfunction
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" PASTE MODE (Fix for Tmux)
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ PASTE MODE (Fix for Tmux)                                                  ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 function! WrapForTmux(s)
   if !exists('$TMUX')
     return a:s
@@ -97,16 +100,17 @@ inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
 "" toggle paste/nopaste
 set pastetoggle=<F2>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" split navigations
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ split navigations                                                          ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 "nnoremap <C-J> <C-W><C-J>
 "nnoremap <C-K> <C-W><C-K>
 "nnoremap <C-L> <C-W><C-L>
 "nnoremap <C-H> <C-W><C-H>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Moving around
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ moving around                                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 " Buffer switching left, down, up, right
 map <c-h> <c-w>h
 map <c-j> <c-w>j
@@ -156,18 +160,18 @@ map <D-8> 8gt
 map <D-9> 9gt
 map <D-0> :tablast<CR>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Enable folding
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ enable folding                                                             ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set foldmethod=indent
 set foldlevel=99
 
 "" Enable folding with the spacebar
 nnoremap <space> za
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Custom options per file type
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ custom options per file type                                               ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 au BufNewFile,BufRead *.py
   \ set tabstop=4
   \ set softtabstop=4
@@ -182,12 +186,15 @@ au BufNewFile,BufRead *.js, *.html, *.css, *.sh
   \ set softtabstop=2
   \ set shiftwidth=2
             
+" ══════════════════════════════════════════════════════════════════════════════
 "" Flagging Unnecessary Whitespace
 au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 
+" ══════════════════════════════════════════════════════════════════════════════
 "" Wrap text at 80 characters
 au BufRead,BufNewFile *.md setlocal textwidth=80
 
+" ══════════════════════════════════════════════════════════════════════════════
 "" Set syntax highlighting for specific file types
 autocmd BufRead,BufNewFile *.md set filetype=markdown
 autocmd BufRead,BufNewFile .{jscs,jshint,eslint}rc set filetype=json
@@ -196,9 +203,9 @@ autocmd BufRead,BufNewFile gitconfig.local set filetype=gitconfig
 autocmd BufRead,BufNewFile tmux.conf.local set filetype=tmux
 autocmd BufRead,BufNewFile vimrc.local set filetype=vim
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Settings
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ Settings                                                                   ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set list listchars=eol:$,trail:∙ listchars+=tab:│\  fillchars+=vert:│,fold:\
 
 set nocompatible          " vimconf is not vi-compatible
@@ -221,7 +228,7 @@ set backspace=indent,eol,start " Fix backspace
 nnoremap j gj
 nnoremap k gk
 
-"##################################################################
+" ══════════════════════════════════════════════════════════════════════════════
 
 set scrolloff=3         " Keep at least 3 lines above/below when scrolling
 set ruler               " show file stats
@@ -231,24 +238,24 @@ set cursorline          " underlines the line where the cursor is
 set showmode
 set showcmd
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Line Numbers
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ line numbers                                                               ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set number              " show line numbers
 nmap <C-N> :set invnumber<CR>
 " toggle line numbers both in normal and insert mode (two mappings)
 "noremap <F3> :set invnumber<CR>
 "inoremap <F3> <C-O>:set invnumber<CR>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Line wrapping
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ line wrapping                                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set nowrap            " no wrap lines
 "set showbreak=\ \ \ \ " indent wrapped lines
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Search settings
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ search settings                                                            ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set matchtime=2       " time to blink match {}
 set matchpairs+=<:>   " for ci< or ci>
 set showmatch         " tmpjump to match-bracket
@@ -269,10 +276,9 @@ nnoremap g# g#zz
 " clear search highlighting with enter
 nnoremap <cr> :noh<CR><CR>:<backspace>
 
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Miscellaneous
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ Miscellaneous                                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set mouse=a           " enable mouse support
 set fileformat=unix   " force unix fileformat
 
@@ -291,9 +297,9 @@ set wildignore+=*.tar.*
 set wildignorecase
 set wildmode=full
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Tab/Space settings
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ tab/space settings                                                         ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set tabstop=2         " width that a <TAB> character displays as
 set softtabstop=2     " backspace after pressing <TAB> will remove up to this many spaces
 set expandtab         " convert <TAB> key-presses to spaces
@@ -301,16 +307,16 @@ set shiftwidth=2      " number of spaces to use for each step of (auto)indent
 set autoindent        " copy indent from current line when starting a new line
 set smartindent       " even better autoindent (e.g. add indent after '{')
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Whitespace
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ whitespace                                                                 ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 "set textwidth=79
 "set formatoptions=tcqrn1
 set noshiftround
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" COLOR OPTIONS
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ color options                                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 noh
 
 "set t_Co=256              " Use 256 colors
@@ -320,9 +326,9 @@ endif
 
 set background=dark       " Use a dark background
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" COMPLETION
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ completion                                                                 ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 " better completion menu (tab | tab/shift-tab)
 "inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 "inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
@@ -346,12 +352,11 @@ inoremap <expr> <C-k> pumvisible() ? '<C-p>' : ''
 " select omni completion entry with enter (always supress newline)
 inoremap <expr> <CR> pumvisible() ? "\<C-Y>" : "\<CR>"
 
-""#########################################################################
-"" Status bar/line
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ STATUS BAR                                                                 ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set laststatus=2        " always show Status bar
-
-""#########################################################################
+" ══════════════════════════════════════════════════════════════════════════════
 function! GitBranch()
   return system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
 endfunction
@@ -382,7 +387,7 @@ let g:currentmode={
     \ '!'  : 'Shell',
     \ 't'  : 'Terminal'
     \}
-""#########################################################################
+" ══════════════════════════════════════════════════════════════════════════════
 function! StatuslineMode()
   let l:mode=mode()
   if l:mode==#"n"
@@ -422,8 +427,10 @@ augroup GetGitBranch
   autocmd!
   autocmd VimEnter,WinEnter,BufEnter * call StatuslineGitBranch()
 augroup END
-""#########################################################################
 
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ STATUSLINE FORMATTING                                                      ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 set noshowmode
 set statusline=
 set statusline+=%0*\ %{StatuslineMode()}                    " The current mode (function 2)
@@ -439,15 +446,14 @@ set statusline+=%2*\ (%Y)\                                   " FileType
 "set statusline+=%2*\ col:\ %02v\                           " Colomn number
 set statusline+=%1*\ ln:\ %02l/%L\ (%3p%%)\                " Line number / total lines, percentage of document
 "set statusline+=%0*\ %{toupper(g:currentmode[mode()])}\    " The current mode (function 1)
-""#########################################################################
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" CUSTOM COLORS
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ CUSTOM COLORS                                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 " https://vim.fandom.com/wiki/Change_statusline_color_to_show_insert_or_normal_mode
 
 " Set StatusLine colors to change when enter/leave modes
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ══════════════════════════════════════════════════════════════════════════════
 "" Custom StatusLine theme
 "au InsertEnter * hi StatusLine ctermbg=223 ctermfg=31
 "au InsertLeave * hi StatusLine ctermbg=223 ctermfg=239
@@ -464,7 +470,7 @@ hi statusline ctermbg=255 ctermfg=31
 au InsertEnter * hi StatusLine ctermbg=255 ctermfg=41
 au InsertLeave * hi StatusLine ctermbg=255 ctermfg=31
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ══════════════════════════════════════════════════════════════════════════════
 "" Highlight CursorLine when enter/leaving modes
 " Highlight CursorLine when enter/leaving modes
 "hi CursorLine ctermbg=237 cterm=none
@@ -477,13 +483,14 @@ au InsertEnter * hi CursorLine ctermbg=236 ctermfg=none
 au InsertLeave * hi CursorLine ctermbg=31 ctermfg=none
 hi CursorLine                  ctermbg=31 ctermfg=none
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Change color used for line numbers
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ Change color used for line numbers                                         ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 "hi LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" CUSTOM COLORS
-
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ USER DEFINED COLORS                                                        ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
 "hi pmenu ctermbg=0 ctermfg=NONE
 "hi pmenusel ctermbg=4 ctermfg=0
 "hi pmenusbar ctermbg=0
@@ -492,16 +499,13 @@ hi CursorLine                  ctermbg=31 ctermfg=none
 "hi search ctermbg=0 ctermfg=NONE
 "hi statusline ctermbg=0 ctermfg=NONE
 "hi statuslinenc ctermbg=0 ctermfg=0
-" -------------------------------------
+" ══════════════════════════════════════════════════════════════════════════════
 "highlight Comment ctermbg=DarkGray
 "highlight Constant ctermbg=Blue
 "highlight Normal ctermbg=Black
 "highlight NonText ctermbg=Black
 "highlight Special ctermbg=DarkMagenta
 "highlight Cursor ctermbg=Green
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" USER DEFINED COLORS
 
 hi User1 ctermfg=007 ctermbg=239 guibg=#4e4e4e guifg=#adadad
 hi User2 ctermfg=007 ctermbg=236 guibg=#303030 guifg=#adadad

@@ -1,13 +1,13 @@
 #!/bin/bash
-# Custom bashrc not generally needed across multiple systems
-# Custom ken-aliases/functions
-#------------------------------------------------------------------------------
-### KEN ~/.bash_kenrc
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ ~/.bash_kenrc                                                              ║
+# ║ Custom bashrc not generally needed across multiple systems                 ║
+# ║ Custom ken-aliases/functions                                               ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 
-#------------------------------------------------------------------------------
-### Enable/Disable (Y/N)
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ ENABLE/DISABLE (Y/N)                                                       ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 AUTO_LOGIN_TMUX="N"             # auto login to tmux session
 #--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
 DISPLAY_TMUX="Y"                # displays if tmux has open sessions at login
@@ -20,9 +20,9 @@ START_SSH_AGENT="N"             # start ssh-agent at login if not already runnin
 DISPLAY_NOTE="Y"                # displays contents of ~/.note
 DISPLAY_TODO="Y"                # displays contents of ~/.todo
 
-#------------------------------------------------------------------------------
-### COLORS
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ COLORS                                                                     ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 # Normal Colors
 Black='\e[0;30m'        # Black
 Red='\e[0;31m'          # Red
@@ -54,28 +54,28 @@ On_White='\e[47m'       # White
 NC="\e[m"               # Color Reset
 #------------------------------------------------------------------------------
 
-#------------------------------------------------------------------------------
-# Alias vi to vim if installed
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Alias vi to vim if installed                                               ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 command -v vim &> /dev/null && alias vi='vim'
 
-#------------------------------------------------------------------------------
-## Source custom prompt from file if exists
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Source custom prompt from file if exists                                   ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ -e "$HOME"/.bash_fancyprompt ]]; then
   source "$HOME"/.bash_fancyprompt
 elif [[ -e "$HOME"/.bash_gitprompt ]]; then
   source "$HOME"/.bash_gitprompt
 fi
 
-#------------------------------------------------------------------------------
-## Get color variable depending on root(red) or user(green)
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Get color variable depending on root(red) or user(green)                   ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;31m"; else export PS1_USER_COLOR="\e[1;32m"; fi
 
-#------------------------------------------------------------------------------
-# git alias/functions
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ git Aliases/Functions                                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
 alias git-logf="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | sed -r -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+ /├\\1─╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m /\\1├─╯\\x1b\\[m/' -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+/├\\1╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m/\\1├╯\\x1b\\[m/' -e 's/╮(\\x1b\\[[0-9;]*m)+\\\\/╮\\1╰╮/' -e 's/╯(\\x1b\\[[0-9;]*m)+\\//╯\\1╭╯/' -e 's/(\\||\\\\)\\x1b\\[m   (\\x1b\\[[0-9;]*m)/╰╮\\2/' -e 's/(\\x1b\\[[0-9;]*m)\\\\/\\1╮/g' -e 's/(\\x1b\\[[0-9;]*m)\\//\\1╯/g' -e 's/^\\*|(\\x1b\\[m )\\*/\\1⎬/g' -e 's/(\\x1b\\[[0-9;]*m)\\|/\\1│/g' | less -r -X +/[^/]HEAD"
 #alias git-lazy='git commit -am "$*" && git push'
@@ -94,9 +94,9 @@ git-show() {
     --bind="alt-y:execute:$commit_hash | xclip -selection clipboard"
 }
 
-#------------------------------------------------------------------------------
-## POWERLINE PROMPT (Override default prompt)
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ POWERLINE PROMPT (Override default prompt)                                 ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ "${POWERLINE_PROMPT}" == "Y" ]]; then
   # Get color variable depending on root(red) or user(green)
   if [[ "$UID" -eq 0 ]]; then
@@ -117,9 +117,9 @@ if [[ "${POWERLINE_PROMPT}" == "Y" ]]; then
   if [[ -e "$HOME"/.bash_gitprompt ]]; then export POWERLINEPS1="Y"; source "$HOME"/.bash_gitprompt; fi
 fi
 
-#------------------------------------------------------------------------------
-## WINDOW TITLE Prevent messed up terminal-window titles
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ WINDOW TITLE Prevent messed up terminal-window titles                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 case $TERM in
   xterm*|rxvt*)
     TITLEBAR='\[\033]0;\u:${PWD}\007\]'
@@ -129,19 +129,21 @@ case $TERM in
   ;;
 esac
 
-### Export Language
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Export Language                                                            ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #export "LC_ALL=en_US.UTF-8"
 #export "LANG=en_US.UTF-8"
 #export "LANGUAGE=en_US.UTF-8"
 
-### Ncurses UTF8 Fix
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Ncurses UTF8 Fix                                                           ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #export "NCURSES_NO_UTF8_ACS=1"
 
-#------------------------------------------------------------------------------
-### SSH Agent
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ SSH Agent                                                                  ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 # Start the ssh-agent in the background
 if [[ "${START_SSH_AGENT}" == "Y" ]]; then
   if [[ -z "$SSH_AUTH_SOCK" ]] ; then
@@ -151,13 +153,14 @@ if [[ "${START_SSH_AGENT}" == "Y" ]]; then
   fi
 fi
 
-### SSH Hushlogin (create ~/.hushlogin if not exists)
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ SSH Hushlogin (create ~/.hushlogin if not exists)                          ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ ! -r "$HOME"/.hushlogin ]]; then touch "$HOME"/.hushlogin; fi
 
-#------------------------------------------------------------------------------
-### MAIL
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ MAIL                          ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 # Check for new mail at login if not =0 and wait ## seconds before mail checks
 MAILCHECK=10
 #if [ -d $HOME/Maildir/ ]; then
@@ -168,15 +171,15 @@ MAILCHECK=10
 #  export MAIL="/var/mail/$USER"
 #fi
 
-#------------------------------------------------------------------------------
-### Default editor
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Default Editor                                                             ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 export VISUAL="vi"
 export EDITOR="vi"
 
-#------------------------------------------------------------------------------
-### MAN Command Options
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ MAN Command Options                                                        ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 export LESS_TERMCAP_mb=$'\e[1;32m'
 export LESS_TERMCAP_md=$'\e[1;32m'
 export LESS_TERMCAP_me=$'\e[0m'
@@ -185,9 +188,9 @@ export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;31m'
 
-#------------------------------------------------------------------------------
-### LESS Command Options
-#-------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ LESS Command Options                                                       ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 # make less more friendly for non-text input files, see lesspipe(1)
 #[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 #alias more='less'
@@ -206,9 +209,9 @@ export PAGER=less
 #export LESS_TERMCAP_ue=$'\E[0m'
 #export LESS_TERMCAP_us=$'\E[01;32m'
 
-#------------------------------------------------------------------------------
-### TMUX
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ TMUX                                                                       ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 ## Auto login to Tmux session or create new
 if [[ "${AUTO_LOGIN_TMUX}" == "Y" ]]; then
   ## Attach to active TMUX session or start new session if none available after login
@@ -244,9 +247,9 @@ fi
 ## TMUX global variables
 export TMUX_CPU_COUNT="grep -c ^processor /proc/cpuinfo"
 
-#------------------------------------------------------------------------------
-### LOGIN GREETINGS
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ LOGIN GREETINGS                                                            ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ "${DISPLAY_GREETING}" == "Y" ]]; then
   greet_time="$(date "+%H")"
   if [ "$greet_time" -lt 12 ]; then greeting="Good morning"
@@ -274,8 +277,9 @@ if [[ "${DISPLAY_GREETING}" == "Y" ]]; then
 fi
 
 
-### Display notes at login
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Display Notes At Login                                                     ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ "${DISPLAY_NOTE}" == "Y" ]]; then
   if [[ -f ~/.note ]] && [[ -s ~/.note ]]; then
     printf "\n~/.note\n-------------------------------------------------------------------------------\n"
@@ -283,8 +287,9 @@ if [[ "${DISPLAY_NOTE}" == "Y" ]]; then
   fi
 fi
 
-### Display todo at login
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Display TODO At Login                                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ "${DISPLAY_TODO}" == "Y" ]]; then
   if [[ -f ~/.todo ]] && [[ -s ~/.todo ]]; then
     printf "\n~/.todo\n-------------------------------------------------------------------------------\n"
@@ -292,21 +297,23 @@ if [[ "${DISPLAY_TODO}" == "Y" ]]; then
   fi
 fi
 
-### fzf util for bash (https://github.com/junegunn/fzf)
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ fzf util for bash (https://github.com/junegunn/fzf)                        ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #[ -f ~/.fzf.bash ] && source "$HOME"/.fzf.bash
 if [[ -f ~/.fzf.bash ]]; then source "$HOME"/.fzf.bash; fi
 
-### ALIASES - Git dotfiles
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Aliases - Git dotfile                                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'    # dotfiles git alias command
 alias dotfiles-ls='dotfiles ls-tree -r HEAD --name-only'        # list files
 alias dotfiles-remove='dotfiles rm --cached'            # remove files
 alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
 
-#------------------------------------------------------------------------------
-### KEN ALIASES ---------------------------------------------------------------
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ KEN Aliases                                                                ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 alias ken-tmux-new-tripanewindow='tmux new-window \; split-window -v \; select-pane -t 1 \; split-window -h \; select-pane -t 3 \; set-option -w monitor-activity off \;'
 #alias tmux='tmux -2'
 #alias tmux='tmux new-session -n $HOSTNAME'
@@ -357,9 +364,9 @@ alias ken-weather-report='curl wttr.in/85226'
 ### SAMBA/CIFS MOUNTS
 #alias ken-cifs-mount='sudo mount -t cifs -o uid=www-data,gid=www-data,dir_mode=0755,file_mode=0644 //192.168.2.7/share /mnt/samba/quickmount'
 
-#------------------------------------------------------------------------------
-### KEN FUNCTIONS -------------------------------------------------------------
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ KEN Functions                                                              ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 
 # Calculator
 function calc() {
@@ -521,11 +528,3 @@ function ken-backup-lxc() {
   tar --numeric-owner -cpzvf LXC-"$HOSTNAME"-"$(basename "$1")"-"$(date +%Y.%m.%d-%H.%M.%S)".tar.gz "$1"
   echo "Created gzip of $* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" || echo "Error occured while creating backup!"
 }
-
-#------------------------------------------------------------------------------
-### KEN VARIABLES -------------------------------------------------------------
-#------------------------------------------------------------------------------
-## apt installs
-#ken_apt_common=(grc figlet tmux rsync nano vim ncdu unzip wget curl sudo openssh-server htop bash-completion util-linux lsb-release psmisc tree git mailutils mutt apt-transport-https ca-certificates gnupg2 software-properties-common iputils-ping traceroute)
-#ken_apt_utils=(nmon dstat iftop iotop nethogs hdparm pciutils lsof hddtemp lm-sensors)
-#ken_apt_ranger=(install ranger atool highlight caca-utils w3m mediainfo poppler-utils)

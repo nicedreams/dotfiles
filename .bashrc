@@ -1,27 +1,28 @@
 #!/bin/bash
-# ~/.bashrc
-# Custom bashrc that could be used across multiple systems
-#------------------------------------------------------------------------------
-
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ ~/.bashrc                                                                  ║
+# ║ Custom bashrc that could be used across multiple systems                   ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 # If not running interactively, don't do anything!
 #[[ $- != *i* ]] && return
 #[[ -z "$PS1" ]] && return
 case $- in *i*) ;; *) return;; esac
 
-#------------------------------------------------------------------------------
-# HISTORY
-#------------------------------------------------------------------------------
-export HISTSIZE=2000
-export HISTFILESIZE=5000
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ HISTORY                                                                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+export HISTSIZE=5000
+export HISTFILESIZE=10000
 export HISTCONTROL=ignoreboth  # don't put duplicate lines in the history. [=ignoredups:erasedups | =ignoreboth]
+#export HISTTIMEFORMAT="%Y-%m-%dT%H:%M:%S "
 export HISTTIMEFORMAT='%F %T '
 export HISTFILE=~/.bash_history
 export HISTIGNORE="history*:pwd:ls:l:ll:exit:sensor*:cd:note:todo:tmux:tmux-ns:tmux-hn:nmon:htop:ranger"
 export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"  # After each command, append to the history file and reread it
 
-#------------------------------------------------------------------------------
-# SHOPT OPTIONS
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ SHOPT OPTIONS                                                              ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 shopt -s histverify     # prefill ! history command instead of running it
 shopt -s histappend     # append history list to HISTFILE on exit
 shopt -s checkwinsize   # fix window sizes when termianl is resized
@@ -38,8 +39,10 @@ bind "set mark-symlinked-directories on"  # Immediately add a trailing slash whe
 # number of trailing directory components to retain when expanding the \w and \W prompt string escapes
 PROMPT_DIRTRIM=3
 
-#------------------------------------------------------------------------------
-# Display error codes - Set trap to intercept a non-zero return code of the last program run:
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Display error codes                                                        ║
+# ║ Set trap to intercept a non-zero return code of the last program run:      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #function EC() {
 #  echo -e '\e[1;33m'code: $?'\e[m\n'
 #}
@@ -49,32 +52,33 @@ PROMPT_DIRTRIM=3
 # Auto logout in seconds after no input
 #TMOUT=300
 
-#------------------------------------------------------------------------------
-# Export Language
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ EXPORT LANGUAGE                                                            ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-#------------------------------------------------------------------------------
-# SET TERMINAL
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ SET TERMINAL                                                               ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 case "$TERM" in
   xterm|screen|tmux|rxvt-unicode)
     export TERM="$TERM-256color"
   ;;
 esac
 
-#------------------------------------------------------------------------------
-# PS1 PROMPT
-#------------------------------------------------------------------------------
-## Set variable identifying the chroot you work in (used in the prompt below)
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ PS1 PROMPT                                                                 ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+# Set variable identifying the chroot you work in (used in the prompt below)
 #------------------------------------------------------------------------------
 if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
   debian_chroot="$(cat /etc/debian_chroot)"
 fi
 
-## Terminal color support else set PS1 with no colors
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Terminal color support else set PS1 with no colors                         ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
   # Get color variable depending on root(red) or user(green)
   if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;91m"; else export PS1_USER_COLOR="\e[1;92m"; fi
@@ -85,18 +89,18 @@ if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
-#------------------------------------------------------------------------------
-# Export path for root vs users
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Export path for root vs users                                              ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ "$UID" -eq 0 ]]; then
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 else
   PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 fi
 
-#------------------------------------------------------------------------------
-# Set PATH so it includes user's private bin if it exists
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Set PATH so it includes user's private bin if it exists                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ -d "$HOME/bin" ]]; then
   if [[ "$UID" -ne 0 ]]; then
     # Includes only $HOME/bin/ and not sub directories
@@ -106,51 +110,60 @@ if [[ -d "$HOME/bin" ]]; then
   fi
 fi
 
-#------------------------------------------------------------------------------
-# Add fzf to PATH
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Add fzf to PATH                                                            ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #if [[ -x "${HOME}"/.fzf/bin/fzf ]]; then PATH="${PATH}:${HOME}/.fzf/bin/"; fi
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
-#------------------------------------------------------------------------------
-# Enable programmable completion features
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Enable programmable completion features                                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 if [ -f /usr/share/bash-completion/bash_completion ]; then
   . /usr/share/bash-completion/bash_completion
 elif [ -f /etc/bash_completion ]; then
   . /etc/bash_completion
 fi
 
-### Use dircolors if exist
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Use dircolors if exist                                                     ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 [[ -e "$HOME"/.dircolors ]] && eval "$(dircolors --sh $HOME/.dircolors)"
 
-#------------------------------------------------------------------------------
-# LESS
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ LESS                                                                 ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #export LESS="-JMQR#3NSi~"
 #export LESS="-JMQRNSi"
 #export LESS="-JMQRSni"
 export LESS="-R"
 export MANPAGER='less -s -M +Gg'       # display percentage into document
 # https://unix.stackexchange.com/questions/119/colors-in-man-pages/147
-export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
-export LESS_TERMCAP_md=$'\e[1;33m'     # begin blink
-export LESS_TERMCAP_so=$'\e[01;44;37m' # begin reverse video
-export LESS_TERMCAP_us=$'\e[01;37m'    # begin underline
-export LESS_TERMCAP_me=$'\e[0m'        # reset bold/blink
-export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
-export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
+#export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
+#export LESS_TERMCAP_md=$'\e[1;33m'     # begin blink
+#export LESS_TERMCAP_so=$'\e[01;44;37m' # begin reverse video
+#export LESS_TERMCAP_us=$'\e[01;37m'    # begin underline
+#export LESS_TERMCAP_me=$'\e[0m'        # reset bold/blink
+#export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
+#export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
+#---------------------------
+export LESS_TERMCAP_mb=$'\e[1;32m'
+export LESS_TERMCAP_md=$'\e[1;32m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[01;33m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[1;4;31m'
 
-#------------------------------------------------------------------------------
-# DEFAULT EDITOR / VIEWER
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ DEFAULT EDITOR / VIEWER                                                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 export EDITOR="vim"
 export PAGER="less"
 
-#------------------------------------------------------------------------------
-# ALIASES
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ ALIASES                                                                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 diff='diff --color'
 #command -v colordiff &> /dev/null && alias diff='colordiff'
 command -v curl &> /dev/null && alias get-wanip="curl http://ipecho.net/plain; echo"
@@ -173,9 +186,9 @@ alias cd..="cd .."
 alias ..="cd .."
 alias mnt='mount | grep -E ^/dev | column -t'
 command -v tree &> /dev/null && alias tree='tree -Csuh'    #  Nice alternative to 'recursive ls' ...
-#-------------------------------------------------------------
-# The ls family
-#-------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ The LS Family                                                              ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 # Add colors for filetype and  human-readable sizes by default on 'ls':
 alias ls='ls -h --color'
 alias l="ls -lv --group-directories-first --color"
@@ -191,9 +204,9 @@ alias llt='ls -lhAtrF --color'
 alias lld='ls -Al --group-directories-first --color'
 alias lsl="ls -lhFA | less"
 
-#------------------------------------------------------------------------------
-# FUNCTIONS
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ FUNCTIONS                                                                  ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 function history-top() {
   history | awk '{CMD[$4]++;count++;}END { for (a in CMD)print CMD[a] " " CMD[a]/count*100 "% " a;}' | grep -v "./" | column -c3 -s " " -t | sort -nr | nl |  head -n20
 }
@@ -201,8 +214,9 @@ function tmux-ns() {
   tmux new-session -s "$1"
 }
 
-### GRC Colors - apt install grc (Put at end of .bashrc)
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ GRC Colors - apt install grc (Put at end of .bashrc)                       ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 ## Colourify GCC Warnings and Errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 ## Colourify Commands
@@ -248,19 +262,20 @@ if [ "$TERM" != dumb ] && [ -n "$GRC" ]; then
     alias ifconfig='colourify ifconfig'
 fi
 
-# exa - ls replacement
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ exa - ls replacement                                                       ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #if [[ -f ~/bin/exa ]]; then
 #  alias l='exa -l'
 #  alias ll='exa -la'
 #  alias llt='exa -la --tree --level=2'
 #fi
 
-#------------------------------------------------------------------------------
-# Import alias/function definitions from file if exist.
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Import alias/function definitions from file if exist.                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #if [[ -e "$HOME"/.bash_kenrc ]]; then source "$HOME"/.bash_kenrc ; fi
 #if [[ -e "$HOME"/.bash_aliases ]]; then source "$HOME"/.bash_aliases ; fi
 #if [[ -e "$HOME"/.bash_functions ]]; then source "$HOME"/.bash_functions ; fi
 for file in "${HOME}"/{.bash_aliases,.bash_function,.bash_kenrc}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------
-

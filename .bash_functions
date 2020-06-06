@@ -1,9 +1,12 @@
 #!/bin/bash
-# ~/.bash_functions
-# Custom functions that could be used across multiple systems
-#------------------------------------------------------------------------------
-### FUNCTIONS
-#------------------------------------------------------------------------------
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ ~/.bash_functions                                                          ║
+# ║ Custom functions that could be used across multiple systems                ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ FUNCTIONS                                                                  ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 
 # The default umask 002 used for normal user / default umask for the root user is 022
 # umask of 022 allows only you to write data, but anyone can read data. / umask of 002 is good when you share data with other users in the same group.
