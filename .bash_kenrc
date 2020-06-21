@@ -228,13 +228,14 @@ if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
    # List TMUX active sessions after login
    if [[ -z "${TMUX}" ]]; then
      if ! tmux ls &> /dev/null; then
-       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
-       printf "%s${BRed}TMUX: No Active Sessions!${NC}\n"
-       printf "%s${BBlue}-------------------------------------------------------------------------------${NC}\n"
+       printf "%s${BBlue}╔════════════════════════════════════════════════════════════════════════════╗${NC}\n"
+       printf "%s${BRed}║ TMUX: No Active Sessions!                                                  ║${NC}\n"
+       printf "%s${BBlue}╚════════════════════════════════════════════════════════════════════════════╝${NC}\n"
      else
-       printf "%s${BGreen}-------------------------------------------------------------------------------${NC}\n"
-       printf "%s${BCyan}TMUX: Listing Sessions:\n"; tmux ls; printf "%s${NC}\n"
-       printf "%s${BGreen}-------------------------------------------------------------------------------${NC}\n"
+       printf "%s${BGreen}╔════════════════════════════════════════════════════════════════════════════╗${NC}\n"
+       printf "%s${BCyan}║ TMUX: Listing Sessions:                                                    ║${NC}\n"
+       printf "%s${BCyan}║ $(tmux ls) %-17s ║\n"
+       printf "%s${BGreen}╚════════════════════════════════════════════════════════════════════════════╝${NC}\n"
      
        #sessions="$( tmux ls 2> /dev/null | awk '! /attached/ { sub(":", "", $1); print $1; }' | xargs echo )"
        #printf "%s\n${BYellow}TMUX Active Sessions: ${BCyan}${sessions}${NC}\n"

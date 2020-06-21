@@ -10,6 +10,11 @@
 # List how many CPU/Threads available
 alias tools-cpu-count='grep -c ^processor /proc/cpuinfo'
 
+# Repeat last command using sudo
+alias fuck='sudo $(history -p !!)'
+
+alias tools-whatfiles='strace -fe trace=creat,open,openat,unlink,unlinkat $*'
+
 ## dstat
 alias tools-dstat='dstat -lcmdsn'
 alias tools-dstat-short='dstat -l --top-cpu -m -n --top-io --disk-util'
@@ -33,7 +38,10 @@ alias tools-sulevel='echo "logname:" $(logname) ; pstree -s $$ | grep sh- -o | w
 alias tools-df='df -hT --total -x tmpfs -x devtmpfs -x overlay'
 
 ## top10 du treesize current directory
-alias tools-du='du -hxc --max-depth=1 | sort -h'
+#alias tools-du='du -hxc --max-depth=1 | sort -h'
+#alias tools-du='du -shx . | sort -h'
+alias tools-du='du -shx {,.[^.]}* | sort -hk1'
+#alias tools-du='du -shx {,.[^.]}* 2>> /dev/null | sort -hk1'
 
 ## apt update/upgrade
 #alias tools-upgrade='sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove --purge -y && sudo apt clean -y && sudo apt autoclean -y'

@@ -18,7 +18,13 @@ let mapleader = ","
 "colorscheme wombat256grf
 "colorscheme seoul256
 "colorscheme onedark
-colorscheme gruvbox
+"colorscheme gruvbox
+
+if filereadable($HOME . "/.vim/colors/gruvbox.vim")
+  colorscheme gruvbox
+else
+  colorscheme peachpuff
+endif
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ Source config files if exists                                              ║

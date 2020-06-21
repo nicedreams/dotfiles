@@ -276,6 +276,18 @@ prompt_dir() {
 }
 
 # --------------------------------------------------------------------
+# Dir: root or user
+prompt_rootuser() {
+#if [[ $user != $DEFAULT_USER || -n $SSH_CLIENT ]]; then
+  if [[ "$UID" -eq 0 ]]; then
+    prompt_segment red bwhite "\\$"
+  else
+    prompt_segment lgrey black "\\$"
+  fi
+#fi
+}
+
+# --------------------------------------------------------------------
 # PS1: second line
 prompt_secondline() {
   PR="$PR\n"
@@ -326,6 +338,7 @@ build_prompt() {
   prompt_dir               # show full directory path
   prompt_virtualenv        # show if virtual environment
   prompt_git               # show if directory is git repo and displays branch and status icons
+  #prompt_rootuser          # show # or $ at end of directory if user or root
   prompt_end               # end of prompt (do not disable/comment)
   #prompt_secondline       # enable 2nd line PS1 for commands
 }
