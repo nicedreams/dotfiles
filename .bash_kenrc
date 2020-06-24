@@ -228,14 +228,14 @@ if [[ "${DISPLAY_TMUX}" == "Y" ]]; then
    # List TMUX active sessions after login
    if [[ -z "${TMUX}" ]]; then
      if ! tmux ls &> /dev/null; then
-       printf "%s${BBlue}╔════════════════════════════════════════════════════════════════════════════╗${NC}\n"
-       printf "%s${BRed}║ TMUX: No Active Sessions!                                                  ║${NC}\n"
-       printf "%s${BBlue}╚════════════════════════════════════════════════════════════════════════════╝${NC}\n"
+       printf "%s${BBlue}╔════════════════════════════════════════════════════════════════════════════╗${NC}\\n"
+       printf "%s${BRed}║ TMUX: No Active Sessions!                                                  ║${NC}\\n"
+       printf "%s${BBlue}╚════════════════════════════════════════════════════════════════════════════╝${NC}\\n"
      else
-       printf "%s${BGreen}╔════════════════════════════════════════════════════════════════════════════╗${NC}\n"
-       printf "%s${BCyan}║ TMUX: Listing Sessions:                                                    ║${NC}\n"
-       printf "%s${BCyan}║ $(tmux ls) %-17s ║\n"
-       printf "%s${BGreen}╚════════════════════════════════════════════════════════════════════════════╝${NC}\n"
+       printf "%s${BGreen}╔════════════════════════════════════════════════════════════════════════════╗${NC}\\n"
+       printf "%s${BCyan}║ TMUX: Listing Sessions:                                                    ║${NC}\\n"
+       printf "%s${BCyan}$(tmux ls)\\n"
+       printf "%s${BGreen}╚════════════════════════════════════════════════════════════════════════════╝${NC}\\n"
      
        #sessions="$( tmux ls 2> /dev/null | awk '! /attached/ { sub(":", "", $1); print $1; }' | xargs echo )"
        #printf "%s\n${BYellow}TMUX Active Sessions: ${BCyan}${sessions}${NC}\n"
@@ -339,8 +339,13 @@ assh() {
   )
 }
 
-# rsync .bash* from kenserver to local home
-alias ken-rsync-dotfiles-kenserver="rsync -avh --progress ken@192.168.2.10:/home/ken/{.bashrc,.bash_aliases,.bash_functions,.bash_kenrc,.bash_gitprompt,.bash_fancyprompt,.tmux*,.vim*,.mutt*} ${HOME}/"
+
+# Download dotfiles from git, copy to $HOME and remove temp files
+ken-dotfiles-download() {
+  git clone --separate-git-dir=$HOME/.dotfiles ken@192.168.2.10:/home/ken/.dotfiles.git  $HOME/tmpdotfiles
+  rsync --recursive --verbose --exclude='.git' --exclude='README.md' tmpdotfiles/ $HOME/
+  rm -rf $HOME/tmpdotfiles
+}
 
 # open vimwiki
 alias vim-wiki='vim -c VimwikiIndex'

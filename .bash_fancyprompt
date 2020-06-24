@@ -322,7 +322,7 @@ prompt_status() {
   #[[ $RETVAL -ne 0 ]] && symbols+="$(ansi_single $(fg_color red))❌" || symbols+="$(ansi_single $(fg_color green))✔"     # show if last command failed or succeeded
   [[ $RETVAL -ne 0 ]] && symbols+="$(ansi_single $(fg_color red))❌"                                                     # show if last command failed
   [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="$(ansi_single $(fg_color bwhite))⏳"                                       # show if background jobs running
-  [[ $UID -eq 0 ]] && symbols+="$(ansi_single $(fg_color red))🛑"                                                        # show if root user
+  #[[ $UID -eq 0 ]] && symbols+="$(ansi_single $(fg_color red))🛑"                                                        # show if root user
   [[ -n $SSH_AUTH_SOCK ]] && symbols+="$(ansi_single $(fg_color yellow))🔑"                                              # show if ssh agent is active
   [[ -n $SSH_CLIENT ]] && symbols+="$(ansi_single $(fg_color bwhite))🔗"                                                 # show if connected via ssh
   [[ -n "$symbols" ]] && prompt_segment dgrey default "$symbols"

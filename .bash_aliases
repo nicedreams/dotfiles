@@ -10,15 +10,10 @@
 # List how many CPU/Threads available
 alias tools-cpu-count='grep -c ^processor /proc/cpuinfo'
 
-# Repeat last command using sudo
-alias fuck='sudo $(history -p !!)'
+# Repeat last command using sudo aka 'fuck'
+alias f='sudo $(history -p !!)'
 
 alias tools-whatfiles='strace -fe trace=creat,open,openat,unlink,unlinkat $*'
-
-## dstat
-alias tools-dstat='dstat -lcmdsn'
-alias tools-dstat-short='dstat -l --top-cpu -m -n --top-io --disk-util'
-alias tools-dstat-long='dstat -c --top-cpu-adv --top-mem -d --top-io-adv -n -l'
 
 ## dmesg (show only err/crit/alert messages)
 alias tools-dmesg-err='dmesg -l err,crit,alert'
@@ -27,8 +22,6 @@ alias tools-dmesg-err='dmesg -l err,crit,alert'
 alias tools-ps-time='ps -eo pid,comm,lstart,etime,time,args'
 
 ## display wan ip
-#alias tools-show-wanip='curl http://ipecho.net/plain; echo'
-#alias tools-show-wanip='curl curlmyip.com'
 alias tools-show-wanip='curl ipv4.icanhazip.com'
 
 ## how far down the su (switch user) rabbit hole are we
@@ -53,7 +46,7 @@ alias tools-upgrade='apt update && sudo apt full-upgrade -y --auto-remove'
 alias tools-logcheck='grc zgrep -i -e fail -e error -e corrupt -e critical /var/log/{syslog*,messages*,kern*} || zgrep -i -e fail -e error -e corrupt -e critical /var/log/{syslog*,messages*,kern*}'
 
 ## watch cpu speed in realtime
-alias tools-cpuspeed='watch -n1 "cat /proc/cpuinfo | grep "MHz""'
+alias tools-cpu-speed='watch -n1 "cat /proc/cpuinfo | grep "MHz""'
 
 ## search ps and format nicely (takes $1)
 alias tools-search-ps='ps aux | grep -v grep | grep -i -e VSZ -e'
