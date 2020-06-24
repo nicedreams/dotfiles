@@ -345,6 +345,7 @@ ken-dotfiles-download() {
   git clone ken@192.168.2.10:/home/ken/git/.dotfiles.git ${HOME}/tmpdotfiles
   rsync -rv --exclude='.git' --exclude='README.md' ${HOME}/tmpdotfiles/ ${HOME}/
   rm -rf ${HOME}/tmpdotfiles
+  source ${HOME}/.bashrc
 }
 
 # open vimwiki
