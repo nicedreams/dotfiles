@@ -342,9 +342,9 @@ assh() {
 
 # Download dotfiles from git, copy to $HOME and remove temp files
 ken-dotfiles-download() {
-  git clone --separate-git-dir=$HOME/.dotfiles ken@192.168.2.10:/home/ken/.dotfiles.git  $HOME/tmpdotfiles
-  rsync --recursive --verbose --exclude='.git' --exclude='README.md' tmpdotfiles/ $HOME/
-  rm -rf $HOME/tmpdotfiles
+  git clone ken@192.168.2.10:/home/ken/git/.dotfiles.git ${HOME}/tmpdotfiles
+  rsync -rv --exclude='.git' --exclude='README.md' ${HOME}/tmpdotfiles/ ${HOME}/
+  rm -rf ${HOME}/tmpdotfiles
 }
 
 # open vimwiki
