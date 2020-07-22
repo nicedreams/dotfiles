@@ -7,6 +7,12 @@
 # ║ ALIASES                                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 
+# Systemd
+alias start='systemctl start $@.service'
+alias stop='systemctl stop $@.service'
+alias status='systemctl status $@.service'
+alias restart='systemctl restart $@.service'
+
 # List how many CPU/Threads available
 alias tools-cpu-count='grep -c ^processor /proc/cpuinfo'
 

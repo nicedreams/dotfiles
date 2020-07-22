@@ -14,7 +14,6 @@ case $- in *i*) ;; *) return;; esac
 export HISTSIZE=5000
 export HISTFILESIZE=10000
 export HISTCONTROL=ignoreboth  # don't put duplicate lines in the history. [=ignoredups:erasedups | =ignoreboth]
-#export HISTTIMEFORMAT="%Y-%m-%dT%H:%M:%S "
 export HISTTIMEFORMAT='%F %T '
 export HISTFILE=~/.bash_history
 export HISTIGNORE="history*:pwd:ls:l:ll:exit:sensor*:cd:note:todo:tmux:tmux-ns:tmux-hn:nmon:htop:ranger"
@@ -277,5 +276,5 @@ fi
 #if [[ -e "$HOME"/.bash_kenrc ]]; then source "$HOME"/.bash_kenrc ; fi
 #if [[ -e "$HOME"/.bash_aliases ]]; then source "$HOME"/.bash_aliases ; fi
 #if [[ -e "$HOME"/.bash_functions ]]; then source "$HOME"/.bash_functions ; fi
-for file in "${HOME}"/{.bash_aliases,.bash_function,.bash_kenrc}; do [[ -r "$file" ]] && source "$file"; done; unset file
+for file in "${HOME}"/{.bash_aliases,.bash_functions,.bash_kenrc}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------

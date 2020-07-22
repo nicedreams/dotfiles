@@ -8,34 +8,55 @@
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 
+# broot function
+br() {
+    f=$(mktemp)
+    (
+  set +e
+  broot --outcmd "$f" "$@"
+  code=$?
+  if [ "$code" != 0 ]; then
+      rm -f "$f"
+      exit "$code"
+  fi
+    )
+    code=$?
+    if [ "$code" != 0 ]; then
+  return "$code"
+    fi
+    d=$(<"$f")
+    rm -f "$f"
+    eval "$d"
+}
+
+# Use non fancy PS1 prompt (if having issues)
+alias tools-ps1-default='export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;93m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;36m\]\w\[\e[m\]\\$ "'
+
 # The default umask 002 used for normal user / default umask for the root user is 022
 # umask of 022 allows only you to write data, but anyone can read data. / umask of 002 is good when you share data with other users in the same group.
 # umask of 077 is good for a completely private system. No other user can read or write your data.
-#function tools-reset-permissions() { find "$@" -type d -exec chmod 0755 {} \; && find "$@" -type f -exec chmod 0664 {} \; ;}
-function tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664; }
-function tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
+#tools-reset-permissions() { find "$@" -type d -exec chmod 0755 {} \; && find "$@" -type f -exec chmod 0664 {} \; ;}
+tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664; }
+tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
 
 # Show formatted ps of user processes
-function tools-ps-user() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
-function psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
-
-# dmesg export to file
-function tools-dmesg-file { dmesg > /root/dmesg."$(date +%m.%d.%Y)".txt; }
+tools-ps-user() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
+psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 
 ## cheat.sh website command search database
-function tools-cheatsh() { curl cheat.sh/"$1"; }
+tools-cheatsh() { curl cheat.sh/"$1"; }
 
 ## Find Top10 most used commands in history
-function tools-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
+tools-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
 
 # List contents of /etc/cron.*
-function tools-cron-ls() { echo "######################"; ls -l /etc/cron.{hourly,daily,weekly,monthly}; echo "######################"; tail -v -n20 /etc/crontab; echo "######################"; crontab -l ;}
+tools-cron-ls() { echo "######################"; ls -l /etc/cron.{hourly,daily,weekly,monthly}; echo "######################"; tail -v -n20 /etc/crontab; echo "######################"; crontab -l ;}
 
 # List terminal color pallet
-function tools-show-colors() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
+tools-show-colors() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
 
 ## Fail2log list all jail status and tail log
-function tools-fail2ban-status() {
+tools-fail2ban-status() {
   fail_list="$(fail2ban-client status |grep "list" |tr -d , |cut -f 2)"
   for i in "${fail_list}"
     do
@@ -45,7 +66,7 @@ function tools-fail2ban-status() {
 }
 
 ## Color log tail
-function tools-logtail-color() {
+tools-logtail-color() {
   if [ $# -eq 0 ]; then
     sudo tail -f /var/log/{syslog,messages}
   fi
@@ -55,7 +76,7 @@ function tools-logtail-color() {
 }
 
 ## Show system status
-function tools-status {
+tools-status() {
   printf "\n\e[30;42m  ***** SYSTEM INFORMATION *****  \e[0m\n"; hostnamectl
   printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
   printf "\n\e[30;42m  ***** MEMORY *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
@@ -64,14 +85,14 @@ function tools-status {
 }
 
 ## Show docker/lxc/kvm
-function tools-virt {
+tools-virt() {
   printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && docker ps
   printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && lxc-ls -f | grep RUNNING
   printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && virsh list --all | grep running ; echo
 }
 
 ### Netcat (fastest way to transfer files) --------------------------------------------------------------------
-function tools-netcat-fastest-transfer {
+tools-netcat-fastest-transfer() {
 [ ! -f /bin/nc ] && printf "netcat command not found at /bin/nc\n" && exit 1
 case "$1" in
   --receive|--server)
@@ -117,7 +138,7 @@ esac
 }
 
 ### Compress files based on extension ---------------------------------------------------------
-function compress() {
+compress() {
    FILE=$1
    shift
    case $FILE in
@@ -132,7 +153,7 @@ function compress() {
 }
 
 ### Universal extract files -----------------------------------------------------------------------
-function extract {
+extract() {
   if [ -z "$1" ]; then
     # display usage if no parameters given
     echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
