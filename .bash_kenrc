@@ -389,12 +389,9 @@ function ken-weather() { curl -s "http://rss.accuweather.com/rss/liveweather_rss
 ## fzf ken-notes
 function ken-notes() {
   cd "${HOME}"/notes
-  fzf --header="F1:Editor F2:Less F3:highlight F4:bat CTRL+E:Editor ENTER:bat" \
-   --bind "f1:execute($EDITOR {})" \
-   --bind "f2:execute(less -Rf {})" \
-   --bind "f3:execute(highlight -O ansi --force {} |less -RSf)" \
-   --bind "f4:execute(bat {})" \
+  fzf --header="ctrl-e:Editor ctrl-l:Less enter:bat" \
    --bind "ctrl-e:execute($EDITOR {})" \
+   --bind "ctrl-l:execute(less -Rf {})" \
    --bind "enter:execute(bat --color=always {} || less -Rf {})" \
    --preview-window=right:80% \
    --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" \
