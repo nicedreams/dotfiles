@@ -16,13 +16,13 @@ export HISTFILESIZE=10000
 export HISTCONTROL=ignoreboth  # don't put duplicate lines in the history. [=ignoredups:erasedups | =ignoreboth]
 export HISTTIMEFORMAT='%F %T '
 export HISTFILE=~/.bash_history
-export HISTIGNORE="history*:pwd:ls:l:ll:exit:sensor*:cd:note:todo:tmux:tmux-ns:tmux-hn:nmon:htop:ranger"
+export HISTIGNORE="history*:pwd:ls:l:ll:exit:sensor*:note:todo:tmux:tmux-ns:tmux-hn"
 export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"  # After each command, append to the history file and reread it
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ SHOPT OPTIONS                                                              ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-shopt -s histverify     # prefill ! history command instead of running it
+#shopt -s histverify     # prefill ! history command instead of running it
 shopt -s histappend     # append history list to HISTFILE on exit
 shopt -s checkwinsize   # fix window sizes when termianl is resized
 shopt -s cmdhist        # attempts to save all lines of a multiple-line command in the same history entry
@@ -37,15 +37,6 @@ bind "set mark-symlinked-directories on"  # Immediately add a trailing slash whe
 
 # number of trailing directory components to retain when expanding the \w and \W prompt string escapes
 PROMPT_DIRTRIM=3
-
-# ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Display error codes                                                        ║
-# ║ Set trap to intercept a non-zero return code of the last program run:      ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-#function EC() {
-#  echo -e '\e[1;33m'code: $?'\e[m\n'
-#}
-#trap EC ERR
 
 #------------------------------------------------------------------------------
 # Auto logout in seconds after no input
@@ -67,6 +58,42 @@ case "$TERM" in
 esac
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ git PS1 Prompt Functions                                                   ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+parse_git_branch() {
+  BRANCH="$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')"
+  if [ ! "${BRANCH}" == "" ]; then
+    if [ "${BRANCH}" == "master" ]; then
+      BRANCH="\e[1;32m${BRANCH}\e[m"
+    else
+      BRANCH="\e[1;35m${BRANCH}\e[m"
+    fi
+    STAT="$(parse_git_dirty)"
+    echo -e "[${BRANCH}${STAT}] "
+  fi
+}
+#------------------------------------------------------------------------------
+parse_git_dirty() {
+  status="$(git status 2>&1 | tee)"
+  #clean="$(echo -n "${status}" 2> /dev/null | grep "Your branch is up to date" &> /dev/null; echo "$?")"
+  dirty="$(echo -n "${status}" 2> /dev/null | grep "modified:" &> /dev/null; echo "$?")"
+  untracked="$(echo -n "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; echo "$?")"
+  ahead="$(echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?")"
+  newfile="$(echo -n "${status}" 2> /dev/null | grep "new file:" &> /dev/null; echo "$?")"
+  renamed="$(echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?")"
+  deleted="$(echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?")"
+  bits=''
+  #if [ "${clean}" == "0" ]; then bits="\e[1;32m✔${bits}"; fi
+  if [ "${renamed}" == "0" ]; then bits="\e[1;31m>${bits}\e[m"; fi
+  if [ "${ahead}" == "0" ]; then bits="\e[1;31m+${bits}\e[m"; fi
+  if [ "${newfile}" == "0" ]; then bits="\e[1;34m*${bits}\e[m"; fi
+  if [ "${untracked}" == "0" ]; then bits="\e[1;33m?${bits}\e[m"; fi
+  if [ "${deleted}" == "0" ]; then bits="\e[1;31mx${bits}\e[m"; fi
+  if [ "${dirty}" == "0" ]; then bits="\e[1;31m!${bits}\e[m"; fi
+  if [ ! "${bits}" == "" ]; then echo " ${bits}"; else echo ""; fi
+}
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Set variable identifying the chroot you work in (used in the prompt below)
@@ -78,16 +105,26 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Terminal color support else set PS1 with no colors                         ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-  # Get color variable depending on root(red) or user(green)
-  if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;91m"; else export PS1_USER_COLOR="\e[1;92m"; fi
-
-  # Set PS1 color depending on root(red) or user(green)
-  export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;93m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;36m\]\w\[\e[m\]\\$ "  # Style: [hostname](username)~$
-  #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1_USER_COLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
+# Use fancyprompt script if exists
+if [[ -e "${HOME}"/.bash_fancyprompt ]]; then
+  source "${HOME}"/.bash_fancyprompt
 else
-  PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # Get color variable depending on root(red) or user(green)
+    if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;91m"; else export PS1_USER_COLOR="\e[1;92m"; fi
+
+    # Set PS1 color depending on root(red) or user(green)
+    export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;93m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [hostname](username)~$
+    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1_USER_COLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
+    
+    # Append git branch to current PS1
+    export PS1="$PS1\$(parse_git_branch)"
+  else
+    # Basic PS1 without color
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+  fi
 fi
+
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Export path for root vs users                                              ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
@@ -100,20 +137,29 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Set PATH so it includes user's private bin if it exists                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-if [[ -d "$HOME/bin" ]]; then
+if [[ -d "${HOME}/bin" ]]; then
   if [[ "$UID" -ne 0 ]]; then
-    # Includes only $HOME/bin/ and not sub directories
-    #PATH="$HOME/bin:${PATH}"
-    # Includes all sub directories in $HOME/bin/
+    # Includes only ${HOME}/bin/ and not sub directories
+    #PATH="${HOME}/bin:${PATH}"
+    # Includes all sub directories in ${HOME}/bin/
     PATH="${PATH}$( find ${HOME}/bin/ -type d -printf ":%p" )"
   fi
+fi
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Start the ssh-agent in the background                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+if [[ -z "$SSH_AUTH_SOCK" ]] ; then
+  printf "Starting ssh-agent: "
+  eval $(ssh-agent -s)
+  #ssh-add
 fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Add fzf to PATH                                                            ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #if [[ -x "${HOME}"/.fzf/bin/fzf ]]; then PATH="${PATH}:${HOME}/.fzf/bin/"; fi
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+if [[ -f ~/.fzf.bash ]]; then source "${HOME}"/.fzf.bash; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Enable programmable completion features                                    ║
@@ -127,7 +173,7 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Use dircolors if exist                                                     ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-[[ -e "$HOME"/.dircolors ]] && eval "$(dircolors --sh $HOME/.dircolors)"
+[[ -e "${HOME}"/.dircolors ]] && eval "$(dircolors --sh ${HOME}/.dircolors)"
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ LESS                                                                 ║
@@ -157,8 +203,16 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ DEFAULT EDITOR / VIEWER                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-export EDITOR="vim"
+export EDITOR="vi"
 export PAGER="less"
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Aliases - Git dotfile                                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+alias dotfiles='/usr/bin/git --git-dir=${HOME}/.dotfiles/ --work-tree=${HOME}'          # dotfiles git alias command
+alias dotfiles-ls='dotfiles ls-tree -r HEAD --name-only'                            # list files
+alias dotfiles-remove='dotfiles rm --cached'                                        # remove files
+alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ ALIASES                                                                    ║
@@ -168,6 +222,7 @@ diff='diff --color'
 command -v curl &> /dev/null && alias get-wanip="curl http://ipecho.net/plain; echo"
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
 command -v fzf &> /dev/null && alias preview='fzf --height=60% --preview-window=right:60% --layout=reverse --preview="bat -p --color=always --line-range 1:100 {} || head -100"'
+command -v vim &> /dev/null && alias vi='vim'
 alias top='top -E g'
 alias ps='ps -auxf'
 alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
@@ -202,79 +257,137 @@ alias lls='ls -lhASrF --color'
 alias llt='ls -lhAtrF --color'
 alias lld='ls -Al --group-directories-first --color'
 alias lsl="ls -lhFA | less"
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ GRC Colors - apt install grc (Put at end of any aliases in .bashrc)        ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+# Colourify GCC Warnings and Errors
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+# Colourify Commands
+GRC="$(which grc)"
+if [ "$TERM" != dumb ] && [ -n "$GRC" ]; then
+  alias colourify="$GRC -es --colour=auto"
+  alias blkid='colourify blkid'
+  alias configure='colourify ./configure'
+  alias df='colourify df'
+  alias diff='colourify diff'
+  alias docker='colourify docker'
+  alias docker-machine='colourify docker-machine'
+  alias du='colourify du'
+  alias env='colourify env'
+  alias free='colourify free'
+  alias fdisk='colourify fdisk'
+  alias findmnt='colourify findmnt'
+  alias make='colourify make'
+  alias gcc='colourify gcc'
+  alias g++='colourify g++'
+  alias id='colourify id'
+  alias ip='colourify ip'
+  alias iptables='colourify iptables'
+  alias as='colourify as'
+  alias gas='colourify gas'
+  alias ld='colourify ld'
+  alias ls='colourify ls -h --color'
+  alias lsof='colourify lsof'
+  alias lsblk='colourify lsblk'
+  alias lspci='colourify lspci'
+  alias netstat='colourify netstat'
+  alias ping='colourify ping'
+  alias traceroute='colourify traceroute'
+  alias traceroute6='colourify traceroute6'
+  alias head='colourify head'
+  alias tail='colourify tail'
+  alias dig='colourify dig'
+  alias mount='colourify mount'
+  alias ps='colourify ps'
+  alias mtr='colourify mtr'
+  alias semanage='colourify semanage'
+  alias getsebool='colourify getsebool'
+  alias ifconfig='colourify ifconfig'
+fi
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ exa - ls replacement                                                       ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+if [[ -f ~/bin/exa ]]; then
+  alias l='exa -l'
+  alias ll='exa -la'
+  alias llt='exa -la --tree --level=2'
+fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-function history-top() {
-  history | awk '{CMD[$4]++;count++;}END { for (a in CMD)print CMD[a] " " CMD[a]/count*100 "% " a;}' | grep -v "./" | column -c3 -s " " -t | sort -nr | nl |  head -n20
-}
-function tmux-ns() {
-  tmux new-session -s "$1"
+# Calculator
+calc() { echo "scale=3;$@" | bc -l ; }
+#------------------------------------------------------------------------------
+# Create/View/Delete notes files
+cnote() { echo "$*" >> ${HOME}/.note; }
+vnote() { cat ${HOME}/.note; }
+dnote() { rm ${HOME}/.note; }
+#------------------------------------------------------------------------------
+# Create date stamp backup copy of file or directory
+backupfile() { cp "$@" "$*"-"$(date +%Y-%m-%d_%H.%M.%S)"; echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" ; }
+# Create date stamp backup gzip of file or directory
+backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; then echo "Error occured while creating backup!"; else echo "Created gzip of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")"; fi ; }
+# Make backup before editing file
+safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Git Aliases / Functions                                                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+# Git log
+alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
+alias git-logf="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | sed -r -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+ /├\\1─╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m /\\1├─╯\\x1b\\[m/' -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+/├\\1╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m/\\1├╯\\x1b\\[m/' -e 's/╮(\\x1b\\[[0-9;]*m)+\\\\/╮\\1╰╮/' -e 's/╯(\\x1b\\[[0-9;]*m)+\\//╯\\1╭╯/' -e 's/(\\||\\\\)\\x1b\\[m   (\\x1b\\[[0-9;]*m)/╰╮\\2/' -e 's/(\\x1b\\[[0-9;]*m)\\\\/\\1╮/g' -e 's/(\\x1b\\[[0-9;]*m)\\//\\1╯/g' -e 's/^\\*|(\\x1b\\[m )\\*/\\1⎬/g' -e 's/(\\x1b\\[[0-9;]*m)\\|/\\1│/g' | less -r -X +/[^/]HEAD"
+# Lazy git commit
+alias git-lazy-commit="git commit -am "$*" && git push"
+# Delete all local git branches that have been merged and deleted from remote
+alias git-prune-local="git fetch --all --prune"
+# Git commit browser
+git-show() {
+  local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
+  local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always %'"
+  #local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always % | diff-so-fancy'"
+  git log --color=always \
+    --format="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" "$@" | \
+  fzf --no-sort --tiebreak=index --no-multi --reverse --ansi \
+    --header="enter to view, alt-y to copy hash" --preview="$view_commit" \
+    --bind="enter:execute:$view_commit | less -R" \
+    --bind="alt-y:execute:$commit_hash | xclip -selection clipboard"
 }
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ GRC Colors - apt install grc (Put at end of .bashrc)                       ║
+# ║ TMUX                                                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-## Colourify GCC Warnings and Errors
-export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-## Colourify Commands
-GRC="$(which grc)"
-if [ "$TERM" != dumb ] && [ -n "$GRC" ]; then
-    alias colourify="$GRC -es --colour=auto"
-    alias blkid='colourify blkid'
-    alias configure='colourify ./configure'
-    alias df='colourify df'
-    alias diff='colourify diff'
-    alias docker='colourify docker'
-    alias docker-machine='colourify docker-machine'
-    alias du='colourify du'
-    alias env='colourify env'
-    alias free='colourify free'
-    alias fdisk='colourify fdisk'
-    alias findmnt='colourify findmnt'
-    alias make='colourify make'
-    alias gcc='colourify gcc'
-    alias g++='colourify g++'
-    alias id='colourify id'
-    alias ip='colourify ip'
-    alias iptables='colourify iptables'
-    alias as='colourify as'
-    alias gas='colourify gas'
-    alias ld='colourify ld'
-    alias ls='colourify ls -h --color'
-    alias lsof='colourify lsof'
-    alias lsblk='colourify lsblk'
-    alias lspci='colourify lspci'
-    alias netstat='colourify netstat'
-    alias ping='colourify ping'
-    alias traceroute='colourify traceroute'
-    alias traceroute6='colourify traceroute6'
-    alias head='colourify head'
-    alias tail='colourify tail'
-    alias dig='colourify dig'
-    alias mount='colourify mount'
-    alias ps='colourify ps'
-    alias mtr='colourify mtr'
-    alias semanage='colourify semanage'
-    alias getsebool='colourify getsebool'
-    alias ifconfig='colourify ifconfig'
+tmux-ns() { tmux new-session -s "$1" ; }
+alias tmux-new-tripanewindow='tmux new-window \; split-window -v \; select-pane -t 1 \; split-window -h \; select-pane -t 3 \; set-option -w monitor-activity off \;'
+#------------------------------------------------------------------------------
+# TMUX global variables
+export TMUX_CPU_COUNT="grep -c ^processor /proc/cpuinfo"
+#------------------------------------------------------------------------------
+# Display TMUX sessions @ login
+# Do nothing if root else tmux if user
+if [[ "${UID}" -ne 0 ]]; then
+  # List TMUX active sessions after login
+  if [[ -z "${TMUX}" ]]; then
+    if ! tmux ls &> /dev/null; then
+      printf "╔════════════════════════════════════════════════════════════════════════════╗\\n"
+      printf "║ TMUX: No Active Sessions!                                                  ║\\n"
+      printf "╚════════════════════════════════════════════════════════════════════════════╝\\n"
+    else
+      printf "╔════════════════════════════════════════════════════════════════════════════╗\\n"
+      printf "║ TMUX: Listing Sessions:                                                    ║\\n"
+      printf "  $(tmux ls)\\n"
+      printf "╚════════════════════════════════════════════════════════════════════════════╝\\n"
+    fi
+  fi
 fi
-
-# ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ exa - ls replacement                                                       ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-#if [[ -f ~/bin/exa ]]; then
-#  alias l='exa -l'
-#  alias ll='exa -la'
-#  alias llt='exa -la --tree --level=2'
-#fi
+#------------------------------------------------------------------------------
+# Attach to active TMUX session or start new session if none available after login
+#if [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
+# If ssh detected attach to existing tmux session or create new one
+#if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session -t ${HOSTNAME}; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Import alias/function definitions from file if exist.                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-#if [[ -e "$HOME"/.bash_kenrc ]]; then source "$HOME"/.bash_kenrc ; fi
-#if [[ -e "$HOME"/.bash_aliases ]]; then source "$HOME"/.bash_aliases ; fi
-#if [[ -e "$HOME"/.bash_functions ]]; then source "$HOME"/.bash_functions ; fi
-for file in "${HOME}"/{.bash_aliases,.bash_functions,.bash_kenrc}; do [[ -r "$file" ]] && source "$file"; done; unset file
+for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------

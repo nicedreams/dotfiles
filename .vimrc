@@ -1,13 +1,49 @@
 " ╔════════════════════════════════════════════════════════════════════════════╗
+" ║                                                                            ║
 " ║ ~/.vimrc                                                                   ║
-" ╚════════════════════════════════════════════════════════════════════════════╝
-
-" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║                                                                            ║
 " ║ non-plugin config below                                                    ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
 
 "" Change vim leader
 let mapleader = ","
+
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ netrw - NERDTree like setup                                                ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
+let g:netrw_altv = 1
+
+" absolute width of netrw window
+let g:netrw_winsize = -28
+" do not display info on the top of window
+let g:netrw_banner = 0
+" tree-view
+let g:netrw_liststyle = 3
+" sort is affecting only: directories on the top, files below
+let g:netrw_sort_sequence = '[\/]$,*'
+" use the previous window to open file
+let g:netrw_browse_split = 4
+
+function! ToggleLExplorer()
+    if exists("t:expl_buf_num")
+        let expl_win_num = bufwinnr(t:expl_buf_num)
+        let cur_win_num = winnr()
+
+        if expl_win_num != -1
+            while expl_win_num != cur_win_num
+                exec "wincmd w"
+                let cur_win_num = winnr()
+            endwhile
+
+            close
+        endif
+
+        unlet t:expl_buf_num
+    else
+         Lexplore
+         let t:expl_buf_num = bufnr("%")
+    endif
+endfunction
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ ColorScheme (ls -l /usr/share/vim/vim*/colors/)                            ║
@@ -40,29 +76,6 @@ endif
 "if !filereadable($HOME . "/.vimrc.plugins") | call system("touch $HOME/.vimrc.plugins") | endif
 "if !filereadable($HOME . "/.vimrc.first") | call system("touch $HOME/.vimrc.first") | endif
 "if !filereadable($HOME . "/.vimrc.last") | call system("touch $HOME/.vimrc.last") | endif
-
-" ╔════════════════════════════════════════════════════════════════════════════╗
-" ║ HOTKEYS                                                                    ║
-" ╚════════════════════════════════════════════════════════════════════════════╝
-map <leader>- :set splitbelow<CR>
-map <leader>% :set splitright<CR>
-
-nnoremap <C-P> :bprev<CR>
-nnoremap <C-N> :bnext<CR>
-"map <F9> :bprevious<CR>
-"map <F10> :bnext<CR>
-map <leader>n :bnext<CR>
-map <leader>p :prev<CR>
-
-"" change to next/prev tab
-"map <F7> :tabp<CR>
-"map <F8> :tabn<CR>
-
-"" toggle word wrap
-"map <F8> :set wrap!<CR>
-
-"" to handle exiting insert mode via a control-C
-inoremap <c-c> <c-o>:call InsertLeaveActions()<cr><c-c>
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ PASTE MODE (Auto set/unset vims paste mode)                                ║
@@ -103,20 +116,34 @@ endfunction
 
 inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
 
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ HOTKEYS                                                                    ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
+
+"" map ctrl+w to ,w
+nnoremap <Leader>w <C-w>
+
+map <leader>- :set splitbelow<CR>
+map <leader>% :set splitright<CR>
+
+"" change to next/previous buffer
+nnoremap <C-P> :bprev<CR>
+nnoremap <C-N> :bnext<CR>
+map <leader>n :bnext<CR>
+map <leader>N :prev<CR>
+
+"" close current buffer
+map <leader>d :bd<CR>
+
+"" open explorer
+map <leader>e :Lexplore<CR>
+
+"" to handle exiting insert mode via a control-C
+inoremap <c-c> <c-o>:call InsertLeaveActions()<cr><c-c>
+
 "" toggle paste/nopaste
 set pastetoggle=<F2>
 
-" ╔════════════════════════════════════════════════════════════════════════════╗
-" ║ split navigations                                                          ║
-" ╚════════════════════════════════════════════════════════════════════════════╝
-"nnoremap <C-J> <C-W><C-J>
-"nnoremap <C-K> <C-W><C-K>
-"nnoremap <C-L> <C-W><C-L>
-"nnoremap <C-H> <C-W><C-H>
-
-" ╔════════════════════════════════════════════════════════════════════════════╗
-" ║ moving around                                                              ║
-" ╚════════════════════════════════════════════════════════════════════════════╝
 " Buffer switching left, down, up, right
 map <c-h> <c-w>h
 map <c-j> <c-w>j
@@ -130,10 +157,16 @@ nnoremap L g_
 nnoremap H ^
 
 " make <c-j>, <c-k>, <c-l>, and <c-h> scroll the screen.
-"nnoremap <c-j> <c-e>
-"nnoremap <c-k> <c-y>
-"nnoremap <c-l> zl
-"nnoremap <c-h> zh
+"inoremap <A-h> <C-o>h
+"inoremap <A-j> <C-o>j
+"inoremap <A-k> <C-o>k
+"inoremap <A-l> <C-o>l
+
+" provide hjkl movements in Insert mode and Command-line mode via the <Alt> modifier key
+noremap! <A-h> <Left>
+noremap! <A-j> <Down>
+noremap! <A-k> <Up>
+noremap! <A-l> <Right>
 
 " make <a-j>, <a-k>, <a-l>, and <a-h> move to window.
 "nnoremap <a-j> <c-w>j
@@ -147,24 +180,16 @@ nnoremap H ^
 "nnoremap <a-H> <c-w>v
 "nnoremap <a-L> <c-w>v<c-w>h
 
-" Useful mappings for managing tabs
-map <leader>tn :tabnew<cr>
-map <leader>to :tabonly<cr>
-map <leader>tc :tabclose<cr>
-map <leader>tm :tabmove
-map <leader>t<leader> :tabnext
+"" change to next/prev tab
+map <leader>t :tabn<CR>
+map <leader>T :tabp<CR>
 
-" Tab switchting
-map <D-1> 1gt
-map <D-2> 2gt
-map <D-3> 3gt
-map <D-4> 4gt
-map <D-5> 5gt
-map <D-6> 6gt
-map <D-7> 7gt
-map <D-8> 8gt
-map <D-9> 9gt
-map <D-0> :tablast<CR>
+" Useful mappings for managing tabs
+"map <leader>tn :tabnew<cr>
+"map <leader>to :tabonly<cr>
+"map <leader>tc :tabclose<cr>
+"map <leader>tm :tabmove
+"map <leader>t<leader> :tabnext
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ enable folding                                                             ║

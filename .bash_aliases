@@ -19,6 +19,17 @@ alias tools-cpu-count='grep -c ^processor /proc/cpuinfo'
 # Repeat last command using sudo aka 'fuck'
 alias f='sudo $(history -p !!)'
 
+# Sysstat - sar
+alias tools-sar-cpu="sar -h -u ALL"
+alias tools-sar-cpu-cores="sar -P ALL"
+alias tools-sar-mem="sar -h -r"
+alias tools-sar-swap="sar -h -S"
+alias tools-sar-io="sar -b"
+alias tools-sar-io-dev="sar -h -p -d"
+alias tools-sar-load="sar -q"
+alias tools-sar-net="sar -h -n DEV"
+
+# strace
 alias tools-whatfiles='strace -fe trace=creat,open,openat,unlink,unlinkat $*'
 
 ## dmesg (show only err/crit/alert messages)
