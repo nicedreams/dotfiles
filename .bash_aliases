@@ -7,6 +7,9 @@
 # ║ ALIASES                                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 
+# Quick open ranger
+alias r='ranger'
+
 # Systemd
 alias start='systemctl start $@.service'
 alias stop='systemctl stop $@.service'
@@ -15,9 +18,6 @@ alias restart='systemctl restart $@.service'
 
 # List how many CPU/Threads available
 alias tools-cpu-count='grep -c ^processor /proc/cpuinfo'
-
-# Repeat last command using sudo aka 'fuck'
-alias f='sudo $(history -p !!)'
 
 # Sysstat - sar
 alias tools-sar-cpu="sar -h -u ALL"

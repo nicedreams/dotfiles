@@ -1,6 +1,5 @@
 #!/bin/bash
-# ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ ~/.bashrc                                                                  ║
+
 # ║ Custom bashrc that could be used across multiple systems                   ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # If not running interactively, don't do anything!
@@ -38,8 +37,9 @@ bind "set mark-symlinked-directories on"  # Immediately add a trailing slash whe
 # number of trailing directory components to retain when expanding the \w and \W prompt string escapes
 PROMPT_DIRTRIM=3
 
-#------------------------------------------------------------------------------
-# Auto logout in seconds after no input
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Auto Logout In Seconds After No Input                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
 #TMOUT=300
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
@@ -97,7 +97,6 @@ parse_git_dirty() {
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Set variable identifying the chroot you work in (used in the prompt below)
-#------------------------------------------------------------------------------
 if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
   debian_chroot="$(cat /etc/debian_chroot)"
 fi
@@ -109,6 +108,7 @@ fi
 if [[ -e "${HOME}"/.bash_fancyprompt ]]; then
   source "${HOME}"/.bash_fancyprompt
 else
+  # Use normal colored prompt
   if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
     # Get color variable depending on root(red) or user(green)
     if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;91m"; else export PS1_USER_COLOR="\e[1;92m"; fi
@@ -149,31 +149,41 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Start the ssh-agent in the background                                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-if [[ -z "$SSH_AUTH_SOCK" ]] ; then
-  printf "Starting ssh-agent: "
-  eval $(ssh-agent -s)
-  #ssh-add
-fi
+# Do not run if root user
+#if [[ "$UID" -ne 0 ]]; then
+#  if [[ -z "$SSH_AUTH_SOCK" ]] ; then
+#    printf "Starting ssh-agent: "
+#    eval $(ssh-agent -s)
+#    #ssh-add $HOME/.ssh/private_key
+#  fi
+#fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Add fzf to PATH                                                            ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-#if [[ -x "${HOME}"/.fzf/bin/fzf ]]; then PATH="${PATH}:${HOME}/.fzf/bin/"; fi
-if [[ -f ~/.fzf.bash ]]; then source "${HOME}"/.fzf.bash; fi
+#if [[ -x ${HOME}/.fzf/bin/fzf ]]; then PATH="${PATH}:${HOME}/.fzf/bin/"; fi
+if [[ -f ${HOME}/.fzf.bash ]]; then source ${HOME}/.fzf.bash; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Enable programmable completion features                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-if [ -f /usr/share/bash-completion/bash_completion ]; then
-  . /usr/share/bash-completion/bash_completion
-elif [ -f /etc/bash_completion ]; then
-  . /etc/bash_completion
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
 fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Use dircolors if exist                                                     ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 [[ -e "${HOME}"/.dircolors ]] && eval "$(dircolors --sh ${HOME}/.dircolors)"
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║  Colored GCC Warnings and Errors                                         ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ LESS                                                                 ║
@@ -192,24 +202,24 @@ export MANPAGER='less -s -M +Gg'       # display percentage into document
 #export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
 #export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
 #---------------------------
-export LESS_TERMCAP_mb=$'\e[1;32m'
-export LESS_TERMCAP_md=$'\e[1;32m'
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[01;33m'
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[1;4;31m'
+#export LESS_TERMCAP_mb=$'\e[1;32m'
+#export LESS_TERMCAP_md=$'\e[1;32m'
+#export LESS_TERMCAP_me=$'\e[0m'
+#export LESS_TERMCAP_se=$'\e[0m'
+#export LESS_TERMCAP_so=$'\e[01;33m'
+#export LESS_TERMCAP_ue=$'\e[0m'
+#export LESS_TERMCAP_us=$'\e[1;4;31m'
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ DEFAULT EDITOR / VIEWER                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-export EDITOR="vi"
+export EDITOR="vim"
 export PAGER="less"
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Aliases - Git dotfile                                                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-alias dotfiles='/usr/bin/git --git-dir=${HOME}/.dotfiles/ --work-tree=${HOME}'          # dotfiles git alias command
+alias dotfiles='/usr/bin/git --git-dir=${HOME}/.dotfiles/ --work-tree=${HOME}'      # dotfiles git alias command
 alias dotfiles-ls='dotfiles ls-tree -r HEAD --name-only'                            # list files
 alias dotfiles-remove='dotfiles rm --cached'                                        # remove files
 alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
@@ -238,8 +248,8 @@ alias df='df -hT'
 alias free='free -h'
 alias cd..="cd .."
 alias ..="cd .."
-alias mnt='mount | grep -E ^/dev | column -t'
-command -v tree &> /dev/null && alias tree='tree -Csuh'    #  Nice alternative to 'recursive ls' ...
+alias mnt='mount | grep -E ^/dev | column -t'   # Show mount in columns
+alias f='sudo $(history -p !!)'                 # Repeat last command using sudo aka 'fuck'
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ The LS Family                                                              ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
@@ -260,8 +270,6 @@ alias lsl="ls -lhFA | less"
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ GRC Colors - apt install grc (Put at end of any aliases in .bashrc)        ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-# Colourify GCC Warnings and Errors
-export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 # Colourify Commands
 GRC="$(which grc)"
 if [ "$TERM" != dumb ] && [ -n "$GRC" ]; then
@@ -320,7 +328,8 @@ fi
 calc() { echo "scale=3;$@" | bc -l ; }
 #------------------------------------------------------------------------------
 # Create/View/Delete notes files
-cnote() { echo "$*" >> ${HOME}/.note; }
+cnote() { if [[ -z "$*" ]]; then echo "$_" >> ${HOME}/.note; else echo "$*" >> ${HOME}/.note; fi ; }
+#cnote() { echo "$*" >> ${HOME}/.note ; }
 vnote() { cat ${HOME}/.note; }
 dnote() { rm ${HOME}/.note; }
 #------------------------------------------------------------------------------
@@ -345,7 +354,6 @@ alias git-prune-local="git fetch --all --prune"
 git-show() {
   local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
   local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always %'"
-  #local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always % | diff-so-fancy'"
   git log --color=always \
     --format="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" "$@" | \
   fzf --no-sort --tiebreak=index --no-multi --reverse --ansi \
@@ -375,7 +383,7 @@ if [[ "${UID}" -ne 0 ]]; then
     else
       printf "╔════════════════════════════════════════════════════════════════════════════╗\\n"
       printf "║ TMUX: Listing Sessions:                                                    ║\\n"
-      printf "  $(tmux ls)\\n"
+      printf "%s  $(tmux ls)\\n"
       printf "╚════════════════════════════════════════════════════════════════════════════╝\\n"
     fi
   fi

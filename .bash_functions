@@ -91,6 +91,47 @@ tools-virt() {
   printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && virsh list --all | grep running ; echo
 }
 
+# Multi utility for notes, commands, bookmarks, etc.
+# Add simple notes or commands like "note cd /usr/local/bin" and run it later by line number.
+# Add previously ran command to notes by "note !!" and can run it again later by line number.
+note() {
+  notefile="$HOME/.note"
+  case "$1" in
+    -l|--list|-v|--view)
+      cat -n "${notefile}"
+      printf "\n" 
+    ;;
+    -c|--clear)
+      read -p "Clear entire ~/.note file? Press Enter to continue or ctrl+c to cancel: " null
+      > "${notefile}"
+    ;;
+    -d|--delete)
+      cat -n "${notefile}"
+      printf "%s---------------------------------------------\n"
+      read -p "     Enter line number to remove: " number
+      if [[ -z "${number}" ]]; then
+        echo "No input entered"
+      else
+        sed -i "${number}d" "${notfile}"
+      fi
+    ;;
+    -e|--edit)
+      ${EDITOR} ${notefile}
+    ;;
+    [1-99]|100)
+      number="$1"
+      line=$(sed -n ${number}p $notefile)
+      eval ${line}
+    ;;
+    -h|--help)
+      printf "(note) Usage:\n note\t\t\t:print note contents\n note my message\t:add new message to note\n -l|-v|--list|--view\t:List/View note\n -c\t\t\t:Clear entire note\n -d\t\t\t:Delete a line from note\n -e\t\t\t:Edit note file with editor\n NUM\t\t\t:Run line number as command\n"
+    ;;
+    *)
+      if [[ -z "$1" ]]; then cat "${notefile}"; else printf "%s\n" "$*" >> "${notefile}"; fi
+    ;;
+  esac
+}
+
 ### Netcat (fastest way to transfer files) --------------------------------------------------------------------
 tools-netcat-fastest-transfer() {
 [ ! -f /bin/nc ] && printf "netcat command not found at /bin/nc\n" && exit 1
