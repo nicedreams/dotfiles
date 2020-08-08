@@ -35,15 +35,12 @@ tools-export-sar() { LC_ALL=C sar -A > /root/sar-${HOSTNAME}-$(printf '%(%Y-%m-%
 ## list processes using swap (enable one of three options)
 tools-swap-usage() { find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- ; }
 
-# The default umask 002 used for normal user / default umask for the root user is 022
-# umask of 022 allows only you to write data, but anyone can read data. / umask of 002 is good when you share data with other users in the same group.
+# umask of 022 allows only you to write data, but anyone can read data.
 # umask of 077 is good for a completely private system. No other user can read or write your data.
-#tools-reset-permissions() { find "$@" -type d -exec chmod 0755 {} \; && find "$@" -type f -exec chmod 0664 {} \; ;}
 tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664; }
 tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
 
 # Show formatted ps of user processes
-tools-ps-user() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 
 ## Find Top10 most used commands in history
@@ -92,42 +89,45 @@ tools-virt() {
 }
 
 # Multi utility for notes, commands, bookmarks, etc.
-# Add simple notes or commands like "note cd /usr/local/bin" and run it later by line number.
-# Add previously ran command to notes by "note !!" and can run it again later by line number.
+# Add text or commands: note cd /usr/local/bin
+# Add previously ran command: note !!
+# Recall a note by line number to run it as command: note 4
 note() {
-  notefile="$HOME/.note"
+  notefile="${HOME}/.note"
+  if [[ ! -e ${notefile} ]]; then touch "${notefile}"; fi
   case "$1" in
     -l|--list|-v|--view)
       cat -n "${notefile}"
       printf "\n" 
     ;;
     -c|--clear)
-      read -p "Clear entire ~/.note file? Press Enter to continue or ctrl+c to cancel: " null
+      read -p "Clear contents of ${notefile}? Press Enter to continue or ctrl+c to cancel: " null
       > "${notefile}"
     ;;
     -d|--delete)
       cat -n "${notefile}"
       printf "%s---------------------------------------------\n"
-      read -p "     Enter line number to remove: " number
-      if [[ -z "${number}" ]]; then
-        echo "No input entered"
-      else
-        sed -i "${number}d" "${notfile}"
-      fi
+      read -r -p "     Enter line number to remove: " number
+      if [[ -z "${number}" ]]; then echo "No input entered"; else sed -i "${number}d" "${notefile}"; fi
     ;;
     -e|--edit)
-      ${EDITOR} ${notefile}
+      ${EDITOR} "${notefile}"
     ;;
-    [1-99]|100)
+    [1-9]*)
       number="$1"
-      line=$(sed -n ${number}p $notefile)
-      eval ${line}
+      line=$(sed -n "${number}"p "${notefile}")
+      eval "${line}"
+    ;;
+    -b|--backup)
+      datetime=$(date +%Y-%m-%d_%H.%M.%S)
+      cp "${notefile}" "${notefile}"-"${datetime}"; echo "Created backup copy of ${notefile} to ${notefile}-${datetime}"
     ;;
     -h|--help)
-      printf "(note) Usage:\n note\t\t\t:print note contents\n note my message\t:add new message to note\n -l|-v|--list|--view\t:List/View note\n -c\t\t\t:Clear entire note\n -d\t\t\t:Delete a line from note\n -e\t\t\t:Edit note file with editor\n NUM\t\t\t:Run line number as command\n"
+      printf "Usage:\n note\t\t\t:print note contents\n note My New Note\t:add new line \"My New Note\" to note\n note !!\t\t:add previous command to note\n -l|-v|--list|--view\t:List/View note with line numbers\n -c|--clear\t\t:Clear entire contents of note file\n -d|--delete\t\t:Delete a line from note\n -e|--edit\t\t:Edit note file with default editor\n NUM\t\t\t:Run line number as command\n -b|--backup\t\t:Backup note file with date/time stamp\n -h|--help\t\t:Help\n"
     ;;
     *)
-      if [[ -z "$1" ]]; then cat "${notefile}"; else printf "%s\n" "$*" >> "${notefile}"; fi
+      #if [[ -z "$1" ]]; then cat "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi
+      if [[ -z "$1" ]]; then cat "${notefile}"; else printf '%q ' "$@" >> "${notefile}"; printf '\n' >> "${notefile}"; fi
     ;;
   esac
 }
@@ -227,4 +227,3 @@ extract() {
     done
   fi
 }
-

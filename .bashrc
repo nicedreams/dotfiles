@@ -325,13 +325,7 @@ fi
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Calculator
-calc() { echo "scale=3;$@" | bc -l ; }
-#------------------------------------------------------------------------------
-# Create/View/Delete notes files
-cnote() { if [[ -z "$*" ]]; then echo "$_" >> ${HOME}/.note; else echo "$*" >> ${HOME}/.note; fi ; }
-#cnote() { echo "$*" >> ${HOME}/.note ; }
-vnote() { cat ${HOME}/.note; }
-dnote() { rm ${HOME}/.note; }
+calc() { echo "$(( $@ ))"; }
 #------------------------------------------------------------------------------
 # Create date stamp backup copy of file or directory
 backupfile() { cp "$@" "$*"-"$(date +%Y-%m-%d_%H.%M.%S)"; echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" ; }
