@@ -103,6 +103,7 @@ note() {
     -c|--clear)
       read -p "Clear contents of ${notefile}? Press Enter to continue or ctrl+c to cancel: " null
       > "${notefile}"
+      printf "%s${notefile} contents have been cleared!\n"
     ;;
     -d|--delete)
       cat -n "${notefile}"

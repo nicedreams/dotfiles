@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Custom bashrc that could be used across multiple systems                   ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # If not running interactively, don't do anything!
@@ -101,9 +101,7 @@ if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
   debian_chroot="$(cat /etc/debian_chroot)"
 fi
 
-# ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Terminal color support else set PS1 with no colors                         ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
+## Terminal color support else set PS1 with no colors
 # Use fancyprompt script if exists
 if [[ -e "${HOME}"/.bash_fancyprompt ]]; then
   source "${HOME}"/.bash_fancyprompt
@@ -333,6 +331,19 @@ backupfile() { cp "$@" "$*"-"$(date +%Y-%m-%d_%H.%M.%S)"; echo "Created backup c
 backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; then echo "Error occured while creating backup!"; else echo "Created gzip of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")"; fi ; }
 # Make backup before editing file
 safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
+#------------------------------------------------------------------------------
+# Shorter version of note function called notes
+notes() {
+  notesfile="${HOME}/.notes"
+  if [[ ! -e ${notesfile} ]]; then touch ${notesfile}; fi
+  case "$1" in
+    [1-9]*) line=$(sed -n "${1}"p "${notesfile}"); eval "${line}" ;;
+    --clear) > "${notesfile}" ;;
+    -e) ${EDITOR} "${notesfile}" ;;
+    -h) printf "%snotes\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear notesfile\n  -e\t\t:edit notesfile\n  notesfile\t:${notesfile}\n" ;;
+    *) if [[ -z "$1" ]]; then cat -n "${notesfile}"; else printf '%s \n' "$*" >> "${notesfile}"; fi ;;
+  esac
+}
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Git Aliases / Functions                                                    ║

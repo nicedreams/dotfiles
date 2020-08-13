@@ -121,7 +121,7 @@ inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
 " ╚════════════════════════════════════════════════════════════════════════════╝
 
 "" map ctrl+w to ,w
-nnoremap <Leader>w <C-w>
+"nnoremap <Leader>w <C-w>
 
 map <leader>- :set splitbelow<CR>
 map <leader>% :set splitright<CR>
