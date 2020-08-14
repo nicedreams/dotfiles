@@ -400,7 +400,14 @@ fi
 #if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session -t ${HOSTNAME}; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Import alias/function definitions from file if exist.                      ║
+# ║ Source other files for alias/function definitions if exist.                ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
+#for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
+declare -a source_files=(
+  ${HOME}/.bash_colors      # PS1 and other terminal color codes to names
+  ${HOME}/.bash_aliases     # Aliases
+  ${HOME}/.bash_functions   # Functions
+  ${HOME}/.bash*.local      # Local and private settings not under version control (e.g. git credentials)
+  )
+for file in ${source_files[*]}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------
