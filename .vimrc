@@ -552,3 +552,10 @@ hi User4 ctermfg=007 ctermbg=056 guibg=#4e4e4e guifg=#4e4e4e
 "hi User8 ctermfg=255 ctermbg=117 guifg=#ffffff  guibg=#5b7fbb
 "hi User9 ctermfg=255 ctermbg=129 guifg=#ffffff  guibg=#810085
 "hi User0 ctermfg=255 ctermbg=240 guifg=#ffffff  guibg=#094afe
+
+" ══════════════════════════════════════════════════════════════════════════════
+" Load local machine settings if they exist
+if filereadable(glob("$HOME/.vimrc.local"))
+  source $HOME/.vimrc.local
+endif
+

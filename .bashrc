@@ -407,7 +407,8 @@ declare -a source_files=(
   ${HOME}/.bash_colors      # PS1 and other terminal color codes to names
   ${HOME}/.bash_aliases     # Aliases
   ${HOME}/.bash_functions   # Functions
-  ${HOME}/.bash*.local      # Local and private settings not under version control (e.g. git credentials)
+  ${HOME}/.bash_server      # Functions and aliases usually used only on servers
+  ${HOME}/.bash*.local      # Local and private settings not under version control (example: credentials)
   )
 for file in ${source_files[*]}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------
