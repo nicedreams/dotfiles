@@ -3,9 +3,9 @@
 # ║ Custom bashrc that could be used across multiple systems                   ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # If not running interactively, don't do anything!
-#[[ $- != *i* ]] && return
+[[ $- != *i* ]] && return
 #[[ -z "$PS1" ]] && return
-case $- in *i*) ;; *) return;; esac
+#case $- in *i*) ;; *) return;; esac
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ HISTORY                                                                    ║
@@ -31,8 +31,8 @@ shopt -s cdspell        # minor errors in the spelling of a directory component 
 #shopt -s dotglob        # bash includes filenames beginning with a â€˜.â€™ in the results of filename expansion
 #shopt -s globstar       # If set, the pattern "**" used in a pathname expansion context will match all files and zero or more directories and subdirectories.
 
-bind "set completion-ignore-case on"      # Perform file completion in a case insensitive fashion
-bind "set mark-symlinked-directories on"  # Immediately add a trailing slash when autocompleting symlinks to directories
+#bind "set completion-ignore-case on"      # Perform file completion in a case insensitive fashion
+#bind "set mark-symlinked-directories on"  # Immediately add a trailing slash when autocompleting symlinks to directories
 
 # number of trailing directory components to retain when expanding the \w and \W prompt string escapes
 PROMPT_DIRTRIM=3
@@ -58,15 +58,39 @@ case "$TERM" in
 esac
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ COLORS                                                                     ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+# COLORS
+BLACK="\e[1;30m"       # Black
+RED="\e[1;31m"         # Red
+GREEN="\e[1;32m"       # Green
+YELLOW="\e[1;33m"      # Yellow
+BLUE="\e[1;34m"        # Blue
+PURPLE="\e[1;35m"      # Purple
+CYAN="\e[1;36m"        # Cyan
+WHITE="\e[1;37m"       # White
+RESET="\e[m"           # Color Reset
+# PS1 COLORS
+PS1BLACK="\[\e[1;30m\]"       # Black
+PS1RED="\[\e[1;31m\]"         # Red
+PS1GREEN="\[\e[1;32m\]"       # Green
+PS1YELLOW="\[\e[1;33m\]"      # Yellow
+PS1BLUE="\[\e[1;34m\]"        # Blue
+PS1PURPLE="\[\e[1;35m\]"      # Purple
+PS1CYAN="\[\e[1;36m\]"        # Cyan
+PS1WHITE="\[\e[1;37m\]"       # White
+PS1RESET="\[\e[m\]"         # Color Reset
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ git PS1 Prompt Functions                                                   ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 parse_git_branch() {
   BRANCH="$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')"
   if [ ! "${BRANCH}" == "" ]; then
     if [ "${BRANCH}" == "master" ]; then
-      BRANCH="\e[1;32m${BRANCH}\e[m"
+      BRANCH="${GREEN}${BRANCH}${RESET}"
     else
-      BRANCH="\e[1;35m${BRANCH}\e[m"
+      BRANCH="${PURPLE}${BRANCH}${RESET}"
     fi
     STAT="$(parse_git_dirty)"
     echo -e "[${BRANCH}${STAT}] "
@@ -83,13 +107,13 @@ parse_git_dirty() {
   renamed="$(echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?")"
   deleted="$(echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?")"
   bits=''
-  #if [ "${clean}" == "0" ]; then bits="\e[1;32m✔${bits}"; fi
-  if [ "${renamed}" == "0" ]; then bits="\e[1;31m>${bits}\e[m"; fi
-  if [ "${ahead}" == "0" ]; then bits="\e[1;31m+${bits}\e[m"; fi
-  if [ "${newfile}" == "0" ]; then bits="\e[1;34m*${bits}\e[m"; fi
-  if [ "${untracked}" == "0" ]; then bits="\e[1;33m?${bits}\e[m"; fi
-  if [ "${deleted}" == "0" ]; then bits="\e[1;31mx${bits}\e[m"; fi
-  if [ "${dirty}" == "0" ]; then bits="\e[1;31m!${bits}\e[m"; fi
+  #if [ "${clean}" == "0" ]; then bits="${GREEN}✔${bits}${RESET}"; fi
+  if [ "${renamed}" == "0" ]; then bits="${RED}>${bits}${RESET}"; fi
+  if [ "${ahead}" == "0" ]; then bits="${RED}+${bits}${RESET}"; fi
+  if [ "${newfile}" == "0" ]; then bits="${BLUE}*${bits}${RESET}"; fi
+  if [ "${untracked}" == "0" ]; then bits="${YELLOW}?${bits}${RESET}"; fi
+  if [ "${deleted}" == "0" ]; then bits="${RED}x${bits}${RESET}"; fi
+  if [ "${dirty}" == "0" ]; then bits="${RED}!${bits}${RESET}"; fi
   if [ ! "${bits}" == "" ]; then echo " ${bits}"; else echo ""; fi
 }
 
@@ -109,11 +133,11 @@ else
   # Use normal colored prompt
   if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
     # Get color variable depending on root(red) or user(green)
-    if [[ "$UID" -eq 0 ]]; then export PS1_USER_COLOR="\e[1;91m"; else export PS1_USER_COLOR="\e[1;92m"; fi
+    if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
 
     # Set PS1 color depending on root(red) or user(green)
-    export PS1="${debian_chroot:+($debian_chroot)}[\[\e[1;93m\]\h\[\e[m\]](\[\e[${PS1_USER_COLOR}\]\u\[\e[m\])\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [hostname](username)~$
-    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1_USER_COLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
+    export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
+    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
     
     # Append git branch to current PS1
     export PS1="$PS1\$(parse_git_branch)"

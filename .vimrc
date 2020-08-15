@@ -222,12 +222,14 @@ au BufNewFile,BufRead *.js, *.html, *.css, *.sh
 au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 
 " ══════════════════════════════════════════════════════════════════════════════
-"" Wrap text at 80 characters
-au BufRead,BufNewFile *.md setlocal textwidth=80
+"" Markdown
+"autocmd BufNewFile,BufRead *.md set filetype=markdown    " Treat all .md files as markdown
+"autocmd FileType markdown set conceallevel=2             " Hide and format markdown elements like **bold**
+"autocmd BufRead,BufNewFile *.md set filetype=markdown    " Set syntax highlighting for markdown file type
+"au BufRead,BufNewFile *.md setlocal textwidth=80         " Wrap text at 80 characters
 
 " ══════════════════════════════════════════════════════════════════════════════
 "" Set syntax highlighting for specific file types
-autocmd BufRead,BufNewFile *.md set filetype=markdown
 autocmd BufRead,BufNewFile .{jscs,jshint,eslint}rc set filetype=json
 autocmd BufRead,BufNewFile .bash*,*/zsh/configs/* set filetype=sh
 autocmd BufRead,BufNewFile gitconfig.local set filetype=gitconfig
@@ -263,7 +265,7 @@ nnoremap k gk
 
 set scrolloff=3         " Keep at least 3 lines above/below when scrolling
 set ruler               " show file stats
-"set relativenumber      " make line numbers relative to the current line
+set relativenumber      " make line numbers relative to the current line
 "set signcolumn=yes      " always show the sign column, e.g. where lint errors are marked
 set cursorline          " underlines the line where the cursor is
 set showmode
@@ -388,14 +390,14 @@ inoremap <expr> <CR> pumvisible() ? "\<C-Y>" : "\<CR>"
 " ╚════════════════════════════════════════════════════════════════════════════╝
 set laststatus=2        " always show Status bar
 " ══════════════════════════════════════════════════════════════════════════════
-function! GitBranch()
-  return system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
-endfunction
+"function! GitBranch()
+"  return system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
+"endfunction
 
-function! StatuslineGit()
-  let l:branchname = GitBranch()
-  return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
-endfunction
+"function! StatuslineGit()
+"  let l:branchname = GitBranch()
+"  return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
+"endfunction
 
 let g:currentmode={
     \ 'n'  : 'Normal',
