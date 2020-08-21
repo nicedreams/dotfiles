@@ -29,6 +29,12 @@ br() {
     eval "$d"
 }
 
+# Show alert message in red on white colors
+msg-alert() { printf "%s\e[1;37m\e[41m ${*} \e[m\n" ; }
+
+## Download/Update dotfiles from github via curl
+dotfiles-download() { cd ${HOME}; curl -#L https://github.com/nicedreams/dotfiles/archive/master.tar.gz | tar -xzv --strip-components 1 --exclude={README.md,LICENSE} ; }
+
 # Export sar data to file
 tools-export-sar() { LC_ALL=C sar -A > /root/sar-${HOSTNAME}-$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1).txt ; }
 
@@ -143,6 +149,35 @@ notes() {
       if [[ -z "$1" ]]; then cat "${notesfile}"; else printf '%q ' "$@" >> "${notesfile}"; printf '\n' >> "${notesfile}"; fi
     ;;
   esac
+}
+
+## Write a horizontal line of characters
+hr() {
+  if [[ "$1" == "--help" ]]; then
+    printf "Draws line of characters\n\nUsage:\n  hr <num> <symbol>\n  hr 80 *\n\nhr by itself will fill entire line with dashes\n"
+  else
+    #printf '%*s\n' "${1:-$COLUMNS}" | tr ' ' "${2:-#}"
+    printf '%*s\n' "${1:-$COLUMNS}" | tr ' ' "${2:--}"
+  fi
+}
+
+## will not overwrite files that have the same name
+function del()
+{
+  local trash_dir="$HOME/.Trash"
+  if [[ ! -d "$trash_dir" ]]; then mkdir -pv "$trash_dir"; fi
+  for file in "$@" ; do
+    if [[ -d "${file}" ]] ; then
+      local already_trashed="${trash_dir}"/"$(basename $file)"
+      if [[ -n "$(/bin/ls -d $already_trashed*)" ]] ; then
+        local count="$(/bin/ls -d $already_trashed* | /usr/bin/wc -l)"
+        count=$((++count))
+        /bin/mv --verbose "$file" "$trash_dir/$file$count"
+        continue
+      fi
+    fi
+    /bin/mv --verbose --backup=numbered "${file}" "${HOME}"/.Trash
+  done
 }
 
 ### Netcat (fastest way to transfer files) --------------------------------------------------------------------
