@@ -241,7 +241,7 @@ autocmd BufRead,BufNewFile vimrc.local set filetype=vim
 " ╚════════════════════════════════════════════════════════════════════════════╝
 set list listchars=eol:$,trail:∙ listchars+=tab:│\  fillchars+=vert:│,fold:\
 
-set nocompatible          " vimconf is not vi-compatible
+"set nocompatible          " vimconf is not vi-compatible
 filetype plugin on        " Needed by vimwiki
 set nolist                " Turn off special characters (like $ at end of line) for the current buffer
 syntax on                 " Enable syntax highlighting

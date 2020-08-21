@@ -88,47 +88,59 @@ tools-virt() {
   printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && virsh list --all | grep running ; echo
 }
 
+## fzf-browser
+function fzf-browse() {
+  cd "$1"
+  fzf --header="ctrl-e:Editor ctrl-l:Less enter:bat" \
+   --bind "enter:execute($EDITOR {})" \
+   --bind "ctrl-l:execute(less -Rf {})" \
+   --preview-window=right:80% \
+   --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" \
+   --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 \
+   --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
+}
+
 # Multi utility for notes, commands, bookmarks, etc.
 # Add text or commands: note cd /usr/local/bin
 # Add previously ran command: note !!
 # Recall a note by line number to run it as command: note 4
-note() {
-  notefile="${HOME}/.note"
-  if [[ ! -e ${notefile} ]]; then touch "${notefile}"; fi
+notes() {
+  notesfile="${HOME}/.notes"
+  if [[ ! -e ${notesfile} ]]; then touch "${notesfile}"; fi
   case "$1" in
     -l|--list|-v|--view)
-      cat -n "${notefile}"
+      cat -n "${notesfile}"
       printf "\n" 
     ;;
     -c|--clear)
-      read -p "Clear contents of ${notefile}? Press Enter to continue or ctrl+c to cancel: " null
-      > "${notefile}"
-      printf "%s${notefile} contents have been cleared!\n"
+      read -p "Clear contents of ${notesfile}? Press Enter to continue or ctrl+c to cancel: " null
+      > "${notesfile}"
+      printf "%s${notesfile} contents have been cleared!\n"
     ;;
     -d|--delete)
-      cat -n "${notefile}"
+      cat -n "${notesfile}"
       printf "%s---------------------------------------------\n"
       read -r -p "     Enter line number to remove: " number
-      if [[ -z "${number}" ]]; then echo "No input entered"; else sed -i "${number}d" "${notefile}"; fi
+      if [[ -z "${number}" ]]; then echo "No input entered"; else sed -i "${number}d" "${notesfile}"; fi
     ;;
     -e|--edit)
-      ${EDITOR} "${notefile}"
+      ${EDITOR} "${notesfile}"
     ;;
     [1-9]*)
       number="$1"
-      line=$(sed -n "${number}"p "${notefile}")
+      line=$(sed -n "${number}"p "${notesfile}")
       eval "${line}"
     ;;
     -b|--backup)
       datetime=$(date +%Y-%m-%d_%H.%M.%S)
-      cp "${notefile}" "${notefile}"-"${datetime}"; echo "Created backup copy of ${notefile} to ${notefile}-${datetime}"
+      cp "${notesfile}" "${notesfile}"-"${datetime}"; echo "Created backup copy of ${notesfile} to ${notesfile}-${datetime}"
     ;;
     -h|--help)
-      printf "Usage:\n note\t\t\t:print note contents\n note My New Note\t:add new line \"My New Note\" to note\n note !!\t\t:add previous command to note\n -l|-v|--list|--view\t:List/View note with line numbers\n -c|--clear\t\t:Clear entire contents of note file\n -d|--delete\t\t:Delete a line from note\n -e|--edit\t\t:Edit note file with default editor\n NUM\t\t\t:Run line number as command\n -b|--backup\t\t:Backup note file with date/time stamp\n -h|--help\t\t:Help\n"
+      printf "Usage:\n notes\t\t\t:print note contents\n note My New Note\t:add new line \"My New Note\" to note\n note !!\t\t:add previous command to note\n -l|-v|--list|--view\t:List/View note with line numbers\n -c|--clear\t\t:Clear entire contents of note file\n -d|--delete\t\t:Delete a line from note\n -e|--edit\t\t:Edit note file with default editor\n NUM\t\t\t:Run line number as command\n -b|--backup\t\t:Backup note file with date/time stamp\n -h|--help\t\t:Help\n"
     ;;
     *)
-      #if [[ -z "$1" ]]; then cat "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi
-      if [[ -z "$1" ]]; then cat "${notefile}"; else printf '%q ' "$@" >> "${notefile}"; printf '\n' >> "${notefile}"; fi
+      #if [[ -z "$1" ]]; then cat "${notesfile}"; else printf '%s \n' "$*" >> "${notesfile}"; fi
+      if [[ -z "$1" ]]; then cat "${notesfile}"; else printf '%q ' "$@" >> "${notesfile}"; printf '\n' >> "${notesfile}"; fi
     ;;
   esac
 }

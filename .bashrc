@@ -214,7 +214,7 @@ export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quo
 #export LESS="-JMQRNSi"
 #export LESS="-JMQRSni"
 export LESS="-R"
-export MANPAGER='less -s -M +Gg'       # display percentage into document
+#export MANPAGER='less -s -M +Gg'       # display percentage into document
 # https://unix.stackexchange.com/questions/119/colors-in-man-pages/147
 #export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
 #export LESS_TERMCAP_md=$'\e[1;33m'     # begin blink
@@ -357,15 +357,15 @@ backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; the
 safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
 #------------------------------------------------------------------------------
 # Shorter version of note function called notes
-notes() {
-  notesfile="${HOME}/.notes"
-  if [[ ! -e ${notesfile} ]]; then touch ${notesfile}; fi
+note() {
+  notefile="${HOME}/.note"
+  if [[ ! -e ${notefile} ]]; then touch ${notefile}; fi
   case "$1" in
-    [1-9]*) line=$(sed -n "${1}"p "${notesfile}"); eval "${line}" ;;
-    --clear) > "${notesfile}" ;;
-    -e) ${EDITOR} "${notesfile}" ;;
-    -h) printf "%snotes\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear notesfile\n  -e\t\t:edit notesfile\n  notesfile\t:${notesfile}\n" ;;
-    *) if [[ -z "$1" ]]; then cat -n "${notesfile}"; else printf '%s \n' "$*" >> "${notesfile}"; fi ;;
+    [1-9]*) line=$(sed -n "${1}"p "${notefile}"); eval "${line}" ;;
+    --clear) > "${notefile}" ;;
+    -e) ${EDITOR} "${notefile}" ;;
+    -h) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear notefile\n  -e\t\t:edit notefile\n  notefile\t:${notefile}\n" ;;
+    *) if [[ -z "$1" ]]; then cat -n "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi ;;
   esac
 }
 
