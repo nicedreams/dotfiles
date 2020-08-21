@@ -349,6 +349,9 @@ fi
 # Calculator
 calc() { echo "$(( $@ ))"; }
 #------------------------------------------------------------------------------
+# CPU Info
+cpuinfo() { lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)' ; }
+#------------------------------------------------------------------------------
 # Create date stamp backup copy of file or directory
 backupfile() { cp "$@" "$*"-"$(date +%Y-%m-%d_%H.%M.%S)"; echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" ; }
 # Create date stamp backup gzip of file or directory
@@ -396,9 +399,6 @@ git-show() {
 # ╚════════════════════════════════════════════════════════════════════════════╝
 tmux-ns() { tmux new-session -s "$1" ; }
 alias tmux-new-tripanewindow='tmux new-window \; split-window -v \; select-pane -t 1 \; split-window -h \; select-pane -t 3 \; set-option -w monitor-activity off \;'
-#------------------------------------------------------------------------------
-# TMUX global variables
-export TMUX_CPU_COUNT="grep -c ^processor /proc/cpuinfo"
 #------------------------------------------------------------------------------
 # Display TMUX sessions @ login
 # Do nothing if root else tmux if user

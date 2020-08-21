@@ -16,9 +16,6 @@ alias stop='systemctl stop $@.service'
 alias status='systemctl status $@.service'
 alias restart='systemctl restart $@.service'
 
-# List how many CPU/Threads available
-alias tools-cpu-count='grep -c ^processor /proc/cpuinfo'
-
 # Sysstat - sar
 alias tools-sar-cpu="sar -h -u ALL"
 alias tools-sar-cpu-cores="sar -P ALL"
