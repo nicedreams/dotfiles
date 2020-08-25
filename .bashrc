@@ -255,6 +255,7 @@ command -v curl &> /dev/null && alias get-wanip="curl http://ipecho.net/plain; e
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
 command -v fzf &> /dev/null && alias preview='fzf --height=60% --preview-window=right:60% --layout=reverse --preview="bat -p --color=always --line-range 1:100 {} || head -100"'
 command -v vim &> /dev/null && alias vi='vim'
+alias rm='rm --preserve-root'
 alias top='top -E g'
 alias ps='ps -auxf'
 alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
@@ -359,7 +360,7 @@ backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; the
 # Make backup before editing file
 safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
 #------------------------------------------------------------------------------
-# Shorter version of note function called notes
+# Shorter version of notes function called note
 note() {
   notefile="${HOME}/.note"
   if [[ ! -e ${notefile} ]]; then touch ${notefile}; fi
@@ -367,7 +368,9 @@ note() {
     [1-9]*) line=$(sed -n "${1}"p "${notefile}"); eval "${line}" ;;
     --clear) > "${notefile}" ;;
     -e) ${EDITOR} "${notefile}" ;;
-    -h) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear notefile\n  -e\t\t:edit notefile\n  notefile\t:${notefile}\n" ;;
+    -d) cat -n "${notefile}"; read -r -p "Remove line: " number; if [[ -z "${number}" ]]; then printf "No input entered\n"; else sed -i "${number}d" "${notefile}"; fi ;;
+    -b|--backup) cp "${notefile}" "${notefile}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${notefile}\n" ;;
+    -h) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear notefile\n  -e\t\t:edit notefile\n  -d\t\t:delete line\n  -b\t\t:backup note file\n  notefile\t:${notefile}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi ;;
   esac
 }
@@ -419,9 +422,9 @@ if [[ "${UID}" -ne 0 ]]; then
 fi
 #------------------------------------------------------------------------------
 # Attach to active TMUX session or start new session if none available after login
-#if [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
+#if [[ -e /usr/bin/tmux ]] && [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
 # If ssh detected attach to existing tmux session or create new one
-#if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session -t ${HOSTNAME}; fi
+#if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session ; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Source other files for alias/function definitions if exist.                ║
