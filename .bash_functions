@@ -106,51 +106,6 @@ function fzf-browse() {
    --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
 }
 
-# Multi utility for notes, commands, bookmarks, etc.
-# Add text or commands: note cd /usr/local/bin
-# Add previously ran command: note !!
-# Recall a note by line number to run it as command: note 4
-notes() {
-  notesfile="${HOME}/.notes"
-  if [[ ! -e ${notesfile} ]]; then touch "${notesfile}"; fi
-  case "$1" in
-    -l|--list|-v|--view)
-      cat -n "${notesfile}"
-      printf "\n" 
-    ;;
-    -c|--clear)
-      read -p "Clear contents of ${notesfile}? Press Enter to continue or ctrl+c to cancel: " null
-      > "${notesfile}"
-      printf "%s${notesfile} contents have been cleared!\n"
-    ;;
-    -d|--delete)
-      cat -n "${notesfile}"
-      printf "%s---------------------------------------------\n"
-      read -r -p "     Enter line number to remove: " number
-      if [[ -z "${number}" ]]; then echo "No input entered"; else sed -i "${number}d" "${notesfile}"; fi
-    ;;
-    -e|--edit)
-      ${EDITOR} "${notesfile}"
-    ;;
-    [1-9]*)
-      number="$1"
-      line=$(sed -n "${number}"p "${notesfile}")
-      eval "${line}"
-    ;;
-    -b|--backup)
-      datetime=$(date +%Y-%m-%d_%H.%M.%S)
-      cp "${notesfile}" "${notesfile}"-"${datetime}"; echo "Created backup copy of ${notesfile} to ${notesfile}-${datetime}"
-    ;;
-    -h|--help)
-      printf "Usage:\n notes\t\t\t:print note contents\n note My New Note\t:add new line \"My New Note\" to note\n note !!\t\t:add previous command to note\n -l|-v|--list|--view\t:List/View note with line numbers\n -c|--clear\t\t:Clear entire contents of note file\n -d|--delete\t\t:Delete a line from note\n -e|--edit\t\t:Edit note file with default editor\n NUM\t\t\t:Run line number as command\n -b|--backup\t\t:Backup note file with date/time stamp\n -h|--help\t\t:Help\n"
-    ;;
-    *)
-      #if [[ -z "$1" ]]; then cat "${notesfile}"; else printf '%s \n' "$*" >> "${notesfile}"; fi
-      if [[ -z "$1" ]]; then cat "${notesfile}"; else printf '%q ' "$@" >> "${notesfile}"; printf '\n' >> "${notesfile}"; fi
-    ;;
-  esac
-}
-
 ## Write a horizontal line of characters
 hr() {
   if [[ "$1" == "--help" ]]; then
