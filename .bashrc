@@ -1,11 +1,10 @@
 #!/bin/bash
+# ~/.bashrc (Kenneth Bernier - kbernier@gmail.com)
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Custom bashrc that could be used across multiple systems                   ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # If not running interactively, don't do anything!
 [[ $- != *i* ]] && return
-#[[ -z "$PS1" ]] && return
-#case $- in *i*) ;; *) return;; esac
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ HISTORY                                                                    ║
@@ -181,12 +180,6 @@ fi
 #fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Add fzf to PATH                                                            ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-#if [[ -x ${HOME}/.fzf/bin/fzf ]]; then PATH="${PATH}:${HOME}/.fzf/bin/"; fi
-if [[ -f ${HOME}/.fzf.bash ]]; then source ${HOME}/.fzf.bash; fi
-
-# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Enable programmable completion features                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 if ! shopt -oq posix; then
@@ -252,8 +245,8 @@ alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/mast
 diff='diff --color'
 #command -v colordiff &> /dev/null && alias diff='colordiff'
 command -v curl &> /dev/null && alias get-wanip="curl http://ipecho.net/plain; echo"
+command -v tmux $> /dev/null && alias tmux-ns='tmux new-session -s'
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
-command -v fzf &> /dev/null && alias preview='fzf --height=60% --preview-window=right:60% --layout=reverse --preview="bat -p --color=always --line-range 1:100 {} || head -100"'
 command -v vim &> /dev/null && alias vi='vim'
 alias rm='rm --preserve-root'
 alias top='top -E g'
@@ -347,6 +340,7 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+preview() { cd "$1"; fzf --bind="enter:execute($EDITOR {})" --height=70% --preview="(bat -p --color=always --line-range 1:100 {} 2> /dev/null || head -100 {})" --preview-window=right:70%:noborder --color='fg:#bbccdd,fg+:#ddeeff,bg:#334455,preview-bg:#223344,border:#778899'; cd - ; }
 # Calculator
 calc() { echo "$(( $@ ))"; }
 #------------------------------------------------------------------------------
@@ -361,16 +355,17 @@ backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; the
 safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
 #------------------------------------------------------------------------------
 # Shorter version of notes function called note
+export notefile="${HOME}/.note"
 note() {
-  notefile="${HOME}/.note"
   if [[ ! -e ${notefile} ]]; then touch ${notefile}; fi
   case "$1" in
     [1-9]*) line=$(sed -n "${1}"p "${notefile}"); eval "${line}" ;;
     --clear) > "${notefile}" ;;
     -e) ${EDITOR} "${notefile}" ;;
-    -d) cat -n "${notefile}"; read -r -p "Remove line: " number; if [[ -z "${number}" ]]; then printf "No input entered\n"; else sed -i "${number}d" "${notefile}"; fi ;;
+    -d) cat -n "${notefile}"; read -r -p "    Remove line: " number; if [[ -z "${number}" ]]; then printf "No input entered\n"; else sed -i "${number}d" "${notefile}"; fi ;;
     -b|--backup) cp "${notefile}" "${notefile}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${notefile}\n" ;;
-    -h) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear notefile\n  -e\t\t:edit notefile\n  -d\t\t:delete line\n  -b\t\t:backup note file\n  notefile\t:${notefile}\n" ;;
+    -c|--change) if [[ -z "$2" ]]; then export notefile="${HOME}/.note"; else export notefile="$2"; fi ;;
+    -h) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -e\t\t:edit note file\n  -d\t\t:delete line\n  -b\t\t:backup note file\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${notefile}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi ;;
   esac
 }
@@ -378,21 +373,29 @@ note() {
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Git Aliases / Functions                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-# Git log
-alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
-alias git-logf="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | sed -r -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+ /├\\1─╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m /\\1├─╯\\x1b\\[m/' -e 's/\\|(\\x1b\\[[0-9;]*m)+\\\\(\\x1b\\[[0-9;]*m)+/├\\1╮\\2/' -e 's/(\\x1b\\[[0-9;]+m)\\|\\x1b\\[m\\1\\/\\x1b\\[m/\\1├╯\\x1b\\[m/' -e 's/╮(\\x1b\\[[0-9;]*m)+\\\\/╮\\1╰╮/' -e 's/╯(\\x1b\\[[0-9;]*m)+\\//╯\\1╭╯/' -e 's/(\\||\\\\)\\x1b\\[m   (\\x1b\\[[0-9;]*m)/╰╮\\2/' -e 's/(\\x1b\\[[0-9;]*m)\\\\/\\1╮/g' -e 's/(\\x1b\\[[0-9;]*m)\\//\\1╯/g' -e 's/^\\*|(\\x1b\\[m )\\*/\\1⎬/g' -e 's/(\\x1b\\[[0-9;]*m)\\|/\\1│/g' | less -r -X +/[^/]HEAD"
 # Lazy git commit
 alias git-lazy-commit="git commit -am "$*" && git push"
 # Delete all local git branches that have been merged and deleted from remote
 alias git-prune-local="git fetch --all --prune"
+# Git log
+alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
+# https://gist.github.com/junegunn/8b572b8d4b5eddd8b85e5f4d40f17236
+git-file() { git rev-parse HEAD > /dev/null 2>&1 || return ; git -c color.status=always status --short | fzf --height 50% "$@" --border -m --ansi --nth 2..,.. --preview '(git diff --color=always -- {-1} | sed 1,4d; cat {-1}) | head -500' | cut -c4- | sed 's/.* -> //' ; }
+git-branch() { git rev-parse HEAD > /dev/null 2>&1 || return ; git branch -a --color=always | grep -v '/HEAD\s' | sort | fzf --height 50% "$@" --border --ansi --multi --tac --preview-window right:70% --preview 'git log --oneline --graph --date=short --pretty="format:%C(auto)%cd %h%d %s" $(sed s/^..// <<< {} | cut -d" " -f1) -- | head -'$LINES | sed 's/^..//' | cut -d' ' -f1 | sed 's#^remotes/##' ; }
+git-tag() { git rev-parse HEAD > /dev/null 2>&1 || return ; git tag --sort -version:refname |fzf --height 50% "$@" --border --multi --preview-window right:70% --preview 'git show --color=always {} | head -'$LINES ; }
+git-history() { git rev-parse HEAD > /dev/null 2>&1 || return ; git log --date=short --format="%C(green)%C(bold)%cd %C(auto)%h%d %s (%an)" --graph --color=always | fzf --height 50% "$@" --border --ansi --no-sort --reverse --multi --bind 'ctrl-s:toggle-sort' --header 'Press CTRL-S to toggle sort' --preview 'grep -o "[a-f0-9]\{7,\}" <<< {} | head -1 | xargs git show --color=always | head -'$LINES | grep -o "[a-f0-9]\{7,\}" ; }
+git-remote() { git rev-parse HEAD > /dev/null 2>&1 || return ; git remote -v | awk '{print $1 "\t" $2}' | uniq | fzf --height 50% "$@" --border --tac --preview 'git log --oneline --graph --date=short --pretty="format:%C(auto)%cd %h%d %s" --remotes={1} | head -200' | cut -d$'\t' -f1 ; }
 # Git commit browser
 git-show() {
   local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
   local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always %'"
   git log --color=always \
+    --graph --decorate \
     --format="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" "$@" | \
   fzf --no-sort --tiebreak=index --no-multi --reverse --ansi \
-    --header="enter to view, alt-y to copy hash" --preview="$view_commit" \
+    --header="enter to view, alt-y to copy hash" \
+    --preview-window=down:50% \
+    --preview="$view_commit" \
     --bind="enter:execute:$view_commit | less -R" \
     --bind="alt-y:execute:$commit_hash | xclip -selection clipboard"
 }
@@ -400,9 +403,6 @@ git-show() {
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ TMUX                                                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-tmux-ns() { tmux new-session -s "$1" ; }
-alias tmux-new-tripanewindow='tmux new-window \; split-window -v \; select-pane -t 1 \; split-window -h \; select-pane -t 3 \; set-option -w monitor-activity off \;'
-#------------------------------------------------------------------------------
 # Display TMUX sessions @ login
 # Do nothing if root else tmux if user
 if [[ "${UID}" -ne 0 ]]; then
@@ -422,6 +422,7 @@ if [[ "${UID}" -ne 0 ]]; then
 fi
 #------------------------------------------------------------------------------
 # Attach to active TMUX session or start new session if none available after login
+# Be careful as if there are issues with ~/.tmux.conf then might have issues logging in to shell
 #if [[ -e /usr/bin/tmux ]] && [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
 # If ssh detected attach to existing tmux session or create new one
 #if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session ; fi
@@ -432,10 +433,13 @@ fi
 #for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
 declare -a source_files=(
   ${HOME}/.bash_colors      # PS1 and other terminal color codes to names
-  ${HOME}/.bash_aliases     # Aliases
-  ${HOME}/.bash_functions   # Functions
+  ${HOME}/.bash_aliases     # Common aliases
+  ${HOME}/.bash_functions   # Common functions
+  ${HOME}/.bash_git         # Git Functions and aliases
   ${HOME}/.bash_server      # Functions and aliases usually used only on servers
   ${HOME}/.bash*.local      # Local and private settings not under version control (example: credentials)
+  ${HOME}/.fzf.bash         # Source ~/.fzf.bash
   )
 for file in ${source_files[*]}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------
+

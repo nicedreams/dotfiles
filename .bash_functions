@@ -52,11 +52,8 @@ psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
 ## Find Top10 most used commands in history
 tools-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
 
-# List contents of /etc/cron.*
-tools-cron-ls() { echo "######################"; ls -l /etc/cron.{hourly,daily,weekly,monthly}; echo "######################"; tail -v -n20 /etc/crontab; echo "######################"; crontab -l ;}
-
 # List terminal color pallet
-tools-show-colors() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
+tools-colors-terminal() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
 
 ## Fail2log list all jail status and tail log
 tools-fail2ban-status() {
@@ -70,12 +67,8 @@ tools-fail2ban-status() {
 
 ## Color log tail
 tools-logtail-color() {
-  if [ $# -eq 0 ]; then
-    sudo tail -f /var/log/{syslog,messages}
-  fi
-  if [ $# -eq 1 ]; then
-    sudo tail -f /var/log/{syslog,messages} | perl -pe 's/.*"$1".*/\e[1;31m$&\e[0m/g'
-  fi
+  if [ $# -eq 0 ]; then sudo tail -f /var/log/{syslog,messages}; fi
+  if [ $# -eq 1 ]; then sudo tail -f /var/log/{syslog,messages} | perl -pe 's/.*"$1".*/\e[1;31m$&\e[0m/g'; fi
 }
 
 ## Show system status
@@ -89,21 +82,9 @@ tools-status() {
 
 ## Show docker/lxc/kvm
 tools-virt() {
-  printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && docker ps
-  printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && lxc-ls -f | grep RUNNING
-  printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && virsh list --all | grep running ; echo
-}
-
-## fzf-browser
-function fzf-browse() {
-  cd "$1"
-  fzf --header="ctrl-e:Editor ctrl-l:Less enter:bat" \
-   --bind "enter:execute($EDITOR {})" \
-   --bind "ctrl-l:execute(less -Rf {})" \
-   --preview-window=right:80% \
-   --preview "(bat -p --color=always --line-range 1:50 {} || head -50)" \
-   --color dark,hl:33,hl+:37,fg+:235,bg+:136,fg+:254 \
-   --color info:254,prompt:37,spinner:108,pointer:235,marker:235 || cd -
+  printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && sudo docker ps
+  printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && sudo lxc-ls -f | grep RUNNING
+  printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && sudo virsh list --all | grep running ; echo
 }
 
 ## Write a horizontal line of characters
@@ -117,7 +98,7 @@ hr() {
 }
 
 ## will not overwrite files that have the same name
-function del()
+del()
 {
   local trash_dir="$HOME/.Trash"
   if [[ ! -d "$trash_dir" ]]; then mkdir -pv "$trash_dir"; fi
