@@ -5,7 +5,14 @@
 " ║ non-plugin config below                                                    ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
 
-"" Change vim leader
+" ╔════════════════════════════════════════════════════════════════════════════╗
+" ║ Source config files if exists                                              ║
+" ╚════════════════════════════════════════════════════════════════════════════╝
+if filereadable($HOME . "/.vim/plugins.vim")
+  source ~/.vim/plugins.vim
+endif
+
+"" Change vim leader ---------------------------
 let mapleader = ","
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
@@ -60,13 +67,6 @@ if filereadable($HOME . "/.vim/colors/gruvbox.vim")
   colorscheme gruvbox
 else
   colorscheme peachpuff
-endif
-
-" ╔════════════════════════════════════════════════════════════════════════════╗
-" ║ Source config files if exists                                              ║
-" ╚════════════════════════════════════════════════════════════════════════════╝
-if filereadable($HOME . "/.vim/plugins.vim")
-  source ~/.vim/plugins.vim
 endif
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
@@ -127,8 +127,6 @@ map <leader>- :set splitbelow<CR>
 map <leader>% :set splitright<CR>
 
 "" change to next/previous buffer
-nnoremap <C-P> :bprev<CR>
-nnoremap <C-N> :bnext<CR>
 map <leader>n :bnext<CR>
 map <leader>N :prev<CR>
 
@@ -181,8 +179,8 @@ noremap! <A-l> <Right>
 "nnoremap <a-L> <c-w>v<c-w>h
 
 "" change to next/prev tab
-map <leader>t :tabn<CR>
-map <leader>T :tabp<CR>
+"map <leader>t :tabn<CR>
+"map <leader>T :tabp<CR>
 
 " Useful mappings for managing tabs
 "map <leader>tn :tabnew<cr>
@@ -247,7 +245,7 @@ set nolist                " Turn off special characters (like $ at end of line) 
 syntax on                 " Enable syntax highlighting
 set noswapfile            " Do not use swap file
 set hidden                " Switch buffers without the need of saving them
-set clipboard=unnamedplus " Copy to clipboard when yanking text with yy/dd etc
+set clipboard=unnamed,unnamedplus " Copy to clipboard when yanking text with yy/dd etc
 "set colorcolumn=80       " render a visual column at 80 characters
 set lazyredraw            " redraw screen only when we need to
 set magic
@@ -275,7 +273,7 @@ set showcmd
 " ║ line numbers                                                               ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
 set number              " show line numbers
-nmap <C-N> :set invnumber<CR>
+"nmap <C-N> :set invnumber<CR>
 " toggle line numbers both in normal and insert mode (two mappings)
 "noremap <F3> :set invnumber<CR>
 "inoremap <F3> <C-O>:set invnumber<CR>
@@ -293,7 +291,7 @@ set matchtime=2       " time to blink match {}
 set matchpairs+=<:>   " for ci< or ci>
 set showmatch         " tmpjump to match-bracket
 
-set incsearch         " search as characters are entered
+"set incsearch         " search as characters are entered
 set ignorecase        " case insensitive
 set smartcase         " (uses set ignorecase)
 set hlsearch          " highlight matches
@@ -328,7 +326,8 @@ set wildignore+=*/min/*,*/vendor/*,*/node_modules/*,*/bower_components/*
 set wildignore+=tags,cscope.*
 set wildignore+=*.tar.*
 set wildignorecase
-set wildmode=full
+"set wildmode=longest,list,full
+set wildmode=longest:full,full
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ tab/space settings                                                         ║
@@ -362,28 +361,26 @@ set background=dark       " Use a dark background
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ completion                                                                 ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
-" better completion menu (tab | tab/shift-tab)
-"inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-"inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-"inoremap <expr> <cr>    pumvisible() ? "\<C-y>" : "\<cr>"
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" MULTIPURPOSE TAB KEY
+" Indent if we're at the beginning of a line. Else, do completion.
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+function! InsertTabWrapper()
+    let col = col('.') - 1
+    if !col
+        return "\<tab>"
+    endif
 
-" Use tab to trigger completion and tab/shift-tab to navigate results
-inoremap <silent><expr> <TAB> pumvisible() ? "\<C-n>" : <SID>check_back_space() ? "\<TAB>" : coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
+    let char = getline('.')[col - 1]
+    if char =~ '\k'
+        " There's an identifier before the cursor, so complete the identifier.
+        return "\<c-p>"
+    else
+        return "\<tab>"
+    endif
 endfunction
-
-" Close preview pane once completion is
-autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
-
-" use ctrl-j, ctrl-k for selecting omni completion entries
-inoremap <expr> <C-j> pumvisible() ? '<C-n>' : ''
-inoremap <expr> <C-k> pumvisible() ? '<C-p>' : ''
-
-" select omni completion entry with enter (always supress newline)
-inoremap <expr> <CR> pumvisible() ? "\<C-Y>" : "\<CR>"
+inoremap <expr> <tab> InsertTabWrapper()
+inoremap <tab> <c-n>
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ STATUS BAR                                                                 ║
@@ -487,17 +484,7 @@ set statusline+=%1*\ ln:\ %02l/%L\ (%3p%%)\                " Line number / total
 
 " Set StatusLine colors to change when enter/leave modes
 " ══════════════════════════════════════════════════════════════════════════════
-"" Custom StatusLine theme
-"au InsertEnter * hi StatusLine ctermbg=223 ctermfg=31
-"au InsertLeave * hi StatusLine ctermbg=223 ctermfg=239
-
-" Default the statusline when entering Vim
-"hi statusline ctermbg=223 ctermfg=31
-" Set StatusLine colors to change when enter/leave modes
-"au InsertEnter * hi StatusLine ctermbg=223 ctermfg=41
-"au InsertLeave * hi StatusLine ctermbg=223 ctermfg=31
-
-" Default the statusline when entering Vim
+" Default the StatusLine when entering Vim
 hi statusline ctermbg=255 ctermfg=31
 " Set StatusLine colors to change when enter/leave modes
 au InsertEnter * hi StatusLine ctermbg=255 ctermfg=41
@@ -505,12 +492,6 @@ au InsertLeave * hi StatusLine ctermbg=255 ctermfg=31
 
 " ══════════════════════════════════════════════════════════════════════════════
 "" Highlight CursorLine when enter/leaving modes
-" Highlight CursorLine when enter/leaving modes
-"hi CursorLine ctermbg=237 cterm=none
-"set nocursorline
-"au InsertEnter * set cursorline
-"au InsertLeave * set nocursorline
-
 set cursorline
 au InsertEnter * hi CursorLine ctermbg=236 ctermfg=none
 au InsertLeave * hi CursorLine ctermbg=31 ctermfg=none
@@ -530,30 +511,18 @@ hi CursorLine                  ctermbg=31 ctermfg=none
 "hi pmenuthumb ctermbg=7
 "hi matchparen ctermbg=0 ctermfg=NONE
 "hi search ctermbg=0 ctermfg=NONE
-"hi statusline ctermbg=0 ctermfg=NONE
-"hi statuslinenc ctermbg=0 ctermfg=0
 " ══════════════════════════════════════════════════════════════════════════════
-"highlight Comment ctermbg=DarkGray
-"highlight Constant ctermbg=Blue
-"highlight Normal ctermbg=Black
-"highlight NonText ctermbg=Black
-"highlight Special ctermbg=DarkMagenta
-"highlight Cursor ctermbg=Green
+"hi Comment ctermbg=DarkGray
+"hi Constant ctermbg=Blue
+"hi Normal ctermbg=Black
+"hi NonText ctermbg=Black
+"hi Special ctermbg=DarkMagenta
+"hi Cursor ctermbg=Green
 
 hi User1 ctermfg=007 ctermbg=239 guibg=#4e4e4e guifg=#adadad
 hi User2 ctermfg=007 ctermbg=236 guibg=#303030 guifg=#adadad
 hi User3 ctermfg=236 ctermbg=236 guibg=#303030 guifg=#303030
 hi User4 ctermfg=007 ctermbg=056 guibg=#4e4e4e guifg=#4e4e4e
-
-"hi User1 ctermfg=255 ctermbg=160 guifg=#ffdad8  guibg=#880c0e
-"hi User2 ctermfg=255 ctermbg=166 guifg=#000000  guibg=#F4905C
-"hi User3 ctermfg=255 ctermbg=226 guifg=#292b00  guibg=#f4f597
-"hi User4 ctermfg=255 ctermbg=112 guifg=#112605  guibg=#aefe7B
-"hi User5 ctermfg=255 ctermbg=113 guifg=#051d00  guibg=#7dcc7d
-"hi User7 ctermfg=255 ctermbg=114 guifg=#ffffff  guibg=#880c0e gui=bold
-"hi User8 ctermfg=255 ctermbg=117 guifg=#ffffff  guibg=#5b7fbb
-"hi User9 ctermfg=255 ctermbg=129 guifg=#ffffff  guibg=#810085
-"hi User0 ctermfg=255 ctermbg=240 guifg=#ffffff  guibg=#094afe
 
 " ══════════════════════════════════════════════════════════════════════════════
 " Load local machine settings if they exist
