@@ -12,14 +12,10 @@ if filereadable($HOME . "/.vim/plugins.vim")
   source ~/.vim/plugins.vim
 endif
 
-"" Change vim leader ---------------------------
-let mapleader = ","
-
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ netrw - NERDTree like setup                                                ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
 let g:netrw_altv = 1
-
 " absolute width of netrw window
 let g:netrw_winsize = -28
 " do not display info on the top of window
@@ -55,14 +51,6 @@ endfunction
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ ColorScheme (ls -l /usr/share/vim/vim*/colors/)                            ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
-"let g:solarized_termcolors=256
-"colorscheme solarized
-"colorscheme simple-dark
-"colorscheme wombat256grf
-"colorscheme seoul256
-"colorscheme onedark
-"colorscheme gruvbox
-
 if filereadable($HOME . "/.vim/colors/gruvbox.vim")
   colorscheme gruvbox
 else
@@ -76,7 +64,7 @@ endif
 "if !filereadable($HOME . "/.vimrc.plugins") | call system("touch $HOME/.vimrc.plugins") | endif
 "if !filereadable($HOME . "/.vimrc.first") | call system("touch $HOME/.vimrc.first") | endif
 "if !filereadable($HOME . "/.vimrc.last") | call system("touch $HOME/.vimrc.last") | endif
-
+"
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ PASTE MODE (Auto set/unset vims paste mode)                                ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
@@ -119,69 +107,51 @@ inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ HOTKEYS                                                                    ║
 " ╚════════════════════════════════════════════════════════════════════════════╝
+" Change vim leader ---------------------------
+let mapleader = ","
 
-"" map ctrl+w to ,w
-"nnoremap <Leader>w <C-w>
+" Map ctrl+w to ,w
+nnoremap <Leader>w <C-w>
 
 map <leader>- :set splitbelow<CR>
 map <leader>% :set splitright<CR>
 
-"" change to next/previous buffer
+" Change to next/previous buffer
 map <leader>n :bnext<CR>
 map <leader>N :prev<CR>
 
-"" close current buffer
+" Close current buffer
 map <leader>d :bd<CR>
 
-"" open explorer
+" Open explorer
 map <leader>e :Lexplore<CR>
 
-"" to handle exiting insert mode via a control-C
+" To handle exiting insert mode via a control-C
 inoremap <c-c> <c-o>:call InsertLeaveActions()<cr><c-c>
 
 "" toggle paste/nopaste
 set pastetoggle=<F2>
 
-" Buffer switching left, down, up, right
-map <c-h> <c-w>h
-map <c-j> <c-w>j
-map <c-k> <c-w>k
-map <c-l> <c-w>l
-
-" make J, K, L, and H move the cursor MORE.
+" Make JKLH move the cursor MORE.
 nnoremap J }
 nnoremap K {
 nnoremap L g_
 nnoremap H ^
 
-" make <c-j>, <c-k>, <c-l>, and <c-h> scroll the screen.
-"inoremap <A-h> <C-o>h
-"inoremap <A-j> <C-o>j
-"inoremap <A-k> <C-o>k
-"inoremap <A-l> <C-o>l
+"" WINDOW SPLITS
+" Navigate between splits
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+" More natural split opening
+set splitbelow
+set splitright
 
-" provide hjkl movements in Insert mode and Command-line mode via the <Alt> modifier key
-noremap! <A-h> <Left>
-noremap! <A-j> <Down>
-noremap! <A-k> <Up>
-noremap! <A-l> <Right>
-
-" make <a-j>, <a-k>, <a-l>, and <a-h> move to window.
-"nnoremap <a-j> <c-w>j
-"nnoremap <a-k> <c-w>k
-"nnoremap <a-l> <c-w>l
-"nnoremap <a-h> <c-w>h
-
-" make <a-J>, <a-K>, <a-L>, and <a-H> create windows.
-"nnoremap <a-J> <c-w>s<c-w>k
-"nnoremap <a-K> <c-w>s
-"nnoremap <a-H> <c-w>v
-"nnoremap <a-L> <c-w>v<c-w>h
-
-"" change to next/prev tab
+"" TABS
+" change to next/prev tab
 "map <leader>t :tabn<CR>
 "map <leader>T :tabp<CR>
-
 " Useful mappings for managing tabs
 "map <leader>tn :tabnew<cr>
 "map <leader>to :tabonly<cr>
@@ -381,6 +351,20 @@ function! InsertTabWrapper()
 endfunction
 inoremap <expr> <tab> InsertTabWrapper()
 inoremap <tab> <c-n>
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Autocomplete brackets, braces and quotes
+" Make sure "set paste" is not set
+" When don't want the mapping, need to escape it using ctrl + v before typing the mapped char like ( { etc.
+" Disabled since gets annoying at times.
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"inoremap " ""<left>
+"inoremap ' ''<left>
+"inoremap ( ()<left>
+"inoremap [ []<left>
+"inoremap { {}<left>
+"inoremap {<CR> {<CR>}<ESC>O
+"inoremap {;<CR> {<CR>};<ESC>O
 
 " ╔════════════════════════════════════════════════════════════════════════════╗
 " ║ STATUS BAR                                                                 ║

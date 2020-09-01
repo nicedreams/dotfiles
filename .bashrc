@@ -354,7 +354,7 @@ backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; the
 # Make backup before editing file
 safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
 #------------------------------------------------------------------------------
-# Shorter version of notes function called note
+# note function that can run commands
 export notefile="${HOME}/.note"
 note() {
   if [[ ! -e ${notefile} ]]; then touch ${notefile}; fi
@@ -362,10 +362,10 @@ note() {
     [1-9]*) line=$(sed -n "${1}"p "${notefile}"); eval "${line}" ;;
     --clear) > "${notefile}" ;;
     -e) ${EDITOR} "${notefile}" ;;
-    -d) cat -n "${notefile}"; read -r -p "    Remove line: " number; if [[ -z "${number}" ]]; then printf "No input entered\n"; else sed -i "${number}d" "${notefile}"; fi ;;
+    -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${notefile}" && printf "%sRemoved line ${2} from ${notefile}\n" ; fi ;;
     -b|--backup) cp "${notefile}" "${notefile}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${notefile}\n" ;;
     -c|--change) if [[ -z "$2" ]]; then export notefile="${HOME}/.note"; else export notefile="$2"; fi ;;
-    -h) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -e\t\t:edit note file\n  -d\t\t:delete line\n  -b\t\t:backup note file\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${notefile}\n" ;;
+    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${notefile}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi ;;
   esac
 }
