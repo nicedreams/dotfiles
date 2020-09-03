@@ -421,8 +421,8 @@ if [[ "${UID}" -ne 0 ]]; then
   fi
 fi
 #------------------------------------------------------------------------------
-# Attach to active TMUX session or start new session if none available after login
 # Be careful as if there are issues with ~/.tmux.conf then might have issues logging in to shell
+# Attach to active TMUX session or start new session if none available after login to console
 #if [[ -e /usr/bin/tmux ]] && [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
 # If ssh detected attach to existing tmux session or create new one
 #if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session ; fi
