@@ -124,27 +124,25 @@ if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
   debian_chroot="$(cat /etc/debian_chroot)"
 fi
 
-## Terminal color support else set PS1 with no colors
-# Use fancyprompt script if exists
-if [[ -e "${HOME}"/.bash_fancyprompt ]]; then
-  source "${HOME}"/.bash_fancyprompt
-else
-  # Use normal colored prompt
-  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-    # Get color variable depending on root(red) or user(green)
-    if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
+# Terminal color support else set PS1 with no colors
+# Use normal colored prompt
+if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+  # Get color variable depending on root(red) or user(green)
+  if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
 
-    # Set PS1 color depending on root(red) or user(green)
-    export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
-    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
+  # Set PS1 color depending on root(red) or user(green)
+  export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
+  #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
     
-    # Append git branch to current PS1
-    export PS1="$PS1\$(parse_git_branch)"
-  else
-    # Basic PS1 without color
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-  fi
+  # Append git branch to current PS1 if git installed
+  command -v git &> /dev/null && export PS1="$PS1\$(parse_git_branch)"
+else
+  # Basic PS1 without color
+  PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
+
+# Use fancyprompt script if exists
+#if [[ -e "${HOME}"/.bash_fancyprompt ]]; then source "${HOME}"/.bash_fancyprompt; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Export path for root vs users                                              ║
@@ -201,34 +199,23 @@ fi
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ LESS                                                                 ║
+# ║ LESS | MAN                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-#export LESS="-JMQR#3NSi~"
-#export LESS="-JMQRNSi"
-#export LESS="-JMQRSni"
 export LESS="-R"
-#export MANPAGER='less -s -M +Gg'       # display percentage into document
-# https://unix.stackexchange.com/questions/119/colors-in-man-pages/147
-#export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
-#export LESS_TERMCAP_md=$'\e[1;33m'     # begin blink
-#export LESS_TERMCAP_so=$'\e[01;44;37m' # begin reverse video
-#export LESS_TERMCAP_us=$'\e[01;37m'    # begin underline
-#export LESS_TERMCAP_me=$'\e[0m'        # reset bold/blink
-#export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
-#export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
-#---------------------------
-#export LESS_TERMCAP_mb=$'\e[1;32m'
-#export LESS_TERMCAP_md=$'\e[1;32m'
-#export LESS_TERMCAP_me=$'\e[0m'
-#export LESS_TERMCAP_se=$'\e[0m'
-#export LESS_TERMCAP_so=$'\e[01;33m'
-#export LESS_TERMCAP_ue=$'\e[0m'
-#export LESS_TERMCAP_us=$'\e[1;4;31m'
+# Have less display coloured man pages
+# from: https://wiki.archlinux.org/index.php/Color_output_in_console#man
+export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
+export LESS_TERMCAP_md=$'\e[1;33m'     # begin blink
+export LESS_TERMCAP_so=$'\e[01;44;37m' # begin reverse video
+export LESS_TERMCAP_us=$'\e[01;37m'    # begin underline
+export LESS_TERMCAP_me=$'\e[0m'        # reset bold/blink
+export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
+export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ DEFAULT EDITOR / VIEWER                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-export EDITOR="vim"
+export EDITOR="vi"
 export PAGER="less"
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
