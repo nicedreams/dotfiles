@@ -81,44 +81,12 @@ PS1WHITE="\[\e[1;37m\]"       # White
 PS1RESET="\[\e[m\]"         # Color Reset
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ git PS1 Prompt Functions                                                   ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-parse_git_branch() {
-  BRANCH="$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')"
-  if [ ! "${BRANCH}" == "" ]; then
-    if [ "${BRANCH}" == "master" ]; then
-      BRANCH="${GREEN}${BRANCH}${RESET}"
-    else
-      BRANCH="${PURPLE}${BRANCH}${RESET}"
-    fi
-    STAT="$(parse_git_dirty)"
-    echo -e "[${BRANCH}${STAT}] "
-  fi
-}
-#------------------------------------------------------------------------------
-parse_git_dirty() {
-  status="$(git status 2>&1 | tee)"
-  #clean="$(echo -n "${status}" 2> /dev/null | grep "Your branch is up to date" &> /dev/null; echo "$?")"
-  dirty="$(echo -n "${status}" 2> /dev/null | grep "modified:" &> /dev/null; echo "$?")"
-  untracked="$(echo -n "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; echo "$?")"
-  ahead="$(echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?")"
-  newfile="$(echo -n "${status}" 2> /dev/null | grep "new file:" &> /dev/null; echo "$?")"
-  renamed="$(echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?")"
-  deleted="$(echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?")"
-  bits=''
-  #if [ "${clean}" == "0" ]; then bits="${GREEN}✔${bits}${RESET}"; fi
-  if [ "${renamed}" == "0" ]; then bits="${RED}>${bits}${RESET}"; fi
-  if [ "${ahead}" == "0" ]; then bits="${RED}+${bits}${RESET}"; fi
-  if [ "${newfile}" == "0" ]; then bits="${BLUE}*${bits}${RESET}"; fi
-  if [ "${untracked}" == "0" ]; then bits="${YELLOW}?${bits}${RESET}"; fi
-  if [ "${deleted}" == "0" ]; then bits="${RED}x${bits}${RESET}"; fi
-  if [ "${dirty}" == "0" ]; then bits="${RED}!${bits}${RESET}"; fi
-  if [ ! "${bits}" == "" ]; then echo " ${bits}"; else echo ""; fi
-}
-
-# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+parse_git_branch() {
+  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1) /'
+}
+
 # Set variable identifying the chroot you work in (used in the prompt below)
 if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
   debian_chroot="$(cat /etc/debian_chroot)"
@@ -133,9 +101,20 @@ if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
   # Set PS1 color depending on root(red) or user(green)
   export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
   #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
-    
+
   # Append git branch to current PS1 if git installed
-  command -v git &> /dev/null && export PS1="$PS1\$(parse_git_branch)"
+  # Do not run if git script detected
+  if [[ -z "$(command -v git &> /dev/null)" ]] && [[ ! -f "${HOME}"/.bash_git ]]; then
+    export GIT_PS1_SHOWDIRTYSTATE=1
+    export GIT_PS1_SHOWCOLORHINTS=1
+    export GIT_PS1_SHOWUNTRACKEDFILES=1
+    # Use built-in __git_ps1 if exist and fallback to parse_git_branch function if not
+    if [[ -n "$(type -t __git_ps1)" ]]; then
+      export PS1="${PS1}\$(__git_ps1 '(%s)') "
+    else
+      export PS1="${PS1}\$(parse_git_branch)"
+    fi
+  fi
 else
   # Basic PS1 without color
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
@@ -229,12 +208,12 @@ alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/mast
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ ALIASES                                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-diff='diff --color'
-#command -v colordiff &> /dev/null && alias diff='colordiff'
-command -v curl &> /dev/null && alias get-wanip="curl http://ipecho.net/plain; echo"
-command -v tmux $> /dev/null && alias tmux-ns='tmux new-session -s'
+command -v curl &> /dev/null && alias whatismyip="curl http://ipecho.net/plain; echo"
+command -v tmux &> /dev/null && alias tmux-ns='tmux new-session -s'
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
 command -v vim &> /dev/null && alias vi='vim'
+# -----------------------------------------------------------------------------
+alias diff='diff --color'
 alias rm='rm --preserve-root'
 alias top='top -E g'
 alias ps='ps -auxf'
@@ -253,23 +232,16 @@ alias cd..="cd .."
 alias ..="cd .."
 alias mnt='mount | grep -E ^/dev | column -t'   # Show mount in columns
 alias f='sudo $(history -p !!)'                 # Repeat last command using sudo aka 'fuck'
-# ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ The LS Family                                                              ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-# Add colors for filetype and  human-readable sizes by default on 'ls':
+# -----------------------------------------------------------------------------
 alias ls='ls -h --color'
 alias l="ls -lv --group-directories-first --color"
 alias ll='ls -lhAF --color'
-alias la='ll -A'           #  Show hidden files.
-alias lx='ls -lXB'         #  Sort by extension.
-alias lk='ls -lSr'         #  Sort by size, biggest last.
-alias lt='ls -ltr'         #  Sort by date, most recent last.
-alias lc='ls -ltcr'        #  Sort by/show change time,most recent last.
-alias lu='ls -ltur'        #  Sort by/show access time,most recent last.
-alias lls='ls -lhASrF --color'
-alias llt='ls -lhAtrF --color'
-alias lld='ls -Al --group-directories-first --color'
-alias lsl="ls -lhFA | less"
+alias lla='ll -A'           #  Show hidden files.
+alias llx='ls -lXB'         #  Sort by extension.
+alias lls='ls -lSr'         #  Sort by size, biggest last.
+alias llt='ls -ltr'         #  Sort by date, most recent last.
+alias llc='ls -ltcr'        #  Sort by/show change time,most recent last.
+alias llu='ls -ltur'        #  Sort by/show access time,most recent last.
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ GRC Colors - apt install grc (Put at end of any aliases in .bashrc)        ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
@@ -327,6 +299,9 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+# ssh copy file from server back to ssh client
+#ssh-dl(){ scp "$1" ${SSH_CLIENT%% *}:/home/ken/Downloads/ ; }
+# fzf preview
 preview() { cd "$1"; fzf --bind="enter:execute($EDITOR {})" --height=70% --preview="(bat -p --color=always --line-range 1:100 {} 2> /dev/null || head -100 {})" --preview-window=right:70%:noborder --color='fg:#bbccdd,fg+:#ddeeff,bg:#334455,preview-bg:#223344,border:#778899'; cd - ; }
 # Calculator
 calc() { echo "$(( $@ ))"; }
@@ -335,11 +310,11 @@ calc() { echo "$(( $@ ))"; }
 cpuinfo() { lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)' ; }
 #------------------------------------------------------------------------------
 # Create date stamp backup copy of file or directory
-backupfile() { cp "$@" "$*"-"$(date +%Y-%m-%d_%H.%M.%S)"; echo "Created backup copy of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")" ; }
+backupfile() { cp "${1}" "${1}"-"$(date +%Y-%m-%d_%H.%M.%S)" ; }
 # Create date stamp backup gzip of file or directory
-backupdir() { if ! tar -czvf "$*"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "$@" ; then echo "Error occured while creating backup!"; else echo "Created gzip of $PWD/$* to $PWD/$*-$(date "+%Y-%m-%d_%H.%M.%S")"; fi ; }
+backupdir() { tar -czvf "${1%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%/}" ; }
 # Make backup before editing file
-safeedit() { cp "$1" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "$1" ; }
+safeedit() { cp "${1}" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "${1}" ; }
 #------------------------------------------------------------------------------
 # note function that can run commands
 export notefile="${HOME}/.note"
@@ -358,36 +333,6 @@ note() {
 }
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Git Aliases / Functions                                                    ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-# Lazy git commit
-alias git-lazy-commit="git commit -am "$*" && git push"
-# Delete all local git branches that have been merged and deleted from remote
-alias git-prune-local="git fetch --all --prune"
-# Git log
-alias git-log="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
-# https://gist.github.com/junegunn/8b572b8d4b5eddd8b85e5f4d40f17236
-git-file() { git rev-parse HEAD > /dev/null 2>&1 || return ; git -c color.status=always status --short | fzf --height 50% "$@" --border -m --ansi --nth 2..,.. --preview '(git diff --color=always -- {-1} | sed 1,4d; cat {-1}) | head -500' | cut -c4- | sed 's/.* -> //' ; }
-git-branch() { git rev-parse HEAD > /dev/null 2>&1 || return ; git branch -a --color=always | grep -v '/HEAD\s' | sort | fzf --height 50% "$@" --border --ansi --multi --tac --preview-window right:70% --preview 'git log --oneline --graph --date=short --pretty="format:%C(auto)%cd %h%d %s" $(sed s/^..// <<< {} | cut -d" " -f1) -- | head -'$LINES | sed 's/^..//' | cut -d' ' -f1 | sed 's#^remotes/##' ; }
-git-tag() { git rev-parse HEAD > /dev/null 2>&1 || return ; git tag --sort -version:refname |fzf --height 50% "$@" --border --multi --preview-window right:70% --preview 'git show --color=always {} | head -'$LINES ; }
-git-history() { git rev-parse HEAD > /dev/null 2>&1 || return ; git log --date=short --format="%C(green)%C(bold)%cd %C(auto)%h%d %s (%an)" --graph --color=always | fzf --height 50% "$@" --border --ansi --no-sort --reverse --multi --bind 'ctrl-s:toggle-sort' --header 'Press CTRL-S to toggle sort' --preview 'grep -o "[a-f0-9]\{7,\}" <<< {} | head -1 | xargs git show --color=always | head -'$LINES | grep -o "[a-f0-9]\{7,\}" ; }
-git-remote() { git rev-parse HEAD > /dev/null 2>&1 || return ; git remote -v | awk '{print $1 "\t" $2}' | uniq | fzf --height 50% "$@" --border --tac --preview 'git log --oneline --graph --date=short --pretty="format:%C(auto)%cd %h%d %s" --remotes={1} | head -200' | cut -d$'\t' -f1 ; }
-# Git commit browser
-git-show() {
-  local commit_hash="echo {} | grep -o '[a-f0-9]\{7\}' | head -1"
-  local view_commit="$commit_hash | xargs -I % sh -c 'git show --color=always %'"
-  git log --color=always \
-    --graph --decorate \
-    --format="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" "$@" | \
-  fzf --no-sort --tiebreak=index --no-multi --reverse --ansi \
-    --header="enter to view, alt-y to copy hash" \
-    --preview-window=down:50% \
-    --preview="$view_commit" \
-    --bind="enter:execute:$view_commit | less -R" \
-    --bind="alt-y:execute:$commit_hash | xclip -selection clipboard"
-}
-
-# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ TMUX                                                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Display TMUX sessions @ login
@@ -402,7 +347,7 @@ if [[ "${UID}" -ne 0 ]]; then
     else
       printf "╔════════════════════════════════════════════════════════════════════════════╗\\n"
       printf "║ TMUX: Listing Sessions:                                                    ║\\n"
-      printf "%s  $(tmux ls)\\n"
+      printf "%s\n" "$(tmux ls)"
       printf "╚════════════════════════════════════════════════════════════════════════════╝\\n"
     fi
   fi
@@ -410,9 +355,9 @@ fi
 #------------------------------------------------------------------------------
 # Be careful as if there are issues with ~/.tmux.conf then might have issues logging in to shell
 # Attach to active TMUX session or start new session if none available after login to console
-#if [[ -e /usr/bin/tmux ]] && [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then tmux attach || tmux new-session ; fi
+#if [[ -z "${TMUX}" || "${SSH_CLIENT}" || "${SSH_TTY}" || ${EUID} = 0 ]]; then (tmux attach || tmux new-session) ; fi
 # If ssh detected attach to existing tmux session or create new one
-#if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then tmux attach || tmux new-session ; fi
+#if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then (tmux attach || tmux new-session) ; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Source other files for alias/function definitions if exist.                ║
