@@ -213,6 +213,16 @@ command -v tmux &> /dev/null && alias tmux-ns='tmux new-session -s'
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
 command -v vim &> /dev/null && alias vi='vim'
 # -----------------------------------------------------------------------------
+alias forgit-log='glo'
+alias forgit-diff='gd'
+alias forgit-add='ga'
+alias forgit-reset-head='grh'
+alias forgit-ignore='gi'
+alias forgit-restore='gcf'
+alias forgit-clean='gclean'
+alias forgit-stash-show='gss'
+alias forgit-cherry-pick='gcp'
+# -----------------------------------------------------------------------------
 alias diff='diff --color'
 alias rm='rm --preserve-root'
 alias top='top -E g'
@@ -299,6 +309,8 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+# Prevent nested ranger instances
+ranger() { if [ -z "$RANGER_LEVEL" ]; then /usr/bin/ranger "$@"; else exit; fi ; }
 # ssh copy file from server back to ssh client
 #ssh-dl(){ scp "$1" ${SSH_CLIENT%% *}:/home/ken/Downloads/ ; }
 # fzf preview
@@ -317,18 +329,18 @@ backupdir() { tar -czvf "${1%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%/}" ; 
 safeedit() { cp "${1}" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "${1}" ; }
 #------------------------------------------------------------------------------
 # note function that can run commands
-export notefile="${HOME}/.note"
+export NOTEFILE="${HOME}/.note"
 note() {
-  if [[ ! -e ${notefile} ]]; then touch ${notefile}; fi
+  if [[ ! -e ${NOTEFILE} ]]; then touch ${NOTEFILE}; fi
   case "$1" in
-    [1-9]*) line=$(sed -n "${1}"p "${notefile}"); eval "${line}" ;;
-    --clear) > "${notefile}" ;;
-    -e) ${EDITOR} "${notefile}" ;;
-    -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${notefile}" && printf "%sRemoved line ${2} from ${notefile}\n" ; fi ;;
-    -b|--backup) cp "${notefile}" "${notefile}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${notefile}\n" ;;
-    -c|--change) if [[ -z "$2" ]]; then export notefile="${HOME}/.note"; else export notefile="$2"; fi ;;
-    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${notefile}\n" ;;
-    *) if [[ -z "$1" ]]; then cat -n "${notefile}"; else printf '%s \n' "$*" >> "${notefile}"; fi ;;
+    [1-9]*) line=$(sed -n "${1}"p "${NOTEFILE}"); eval "${line}" ;;
+    --clear) > "${NOTEFILE}" ;;
+    -e) ${EDITOR} "${NOTEFILE}" ;;
+    -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${NOTEFILE}" && printf "%sRemoved line ${2} from ${NOTEFILE}\n" ; fi ;;
+    -b|--backup) cp "${NOTEFILE}" "${NOTEFILE}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${NOTEFILE}\n" ;;
+    -c|--change) if [[ -z "$2" ]]; then export NOTEFILE="${HOME}/.note"; else export NOTEFILE="$2"; fi ;;
+    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${NOTEFILE}\n" ;;
+    *) if [[ -z "$1" ]]; then cat -n "${NOTEFILE}"; else printf '%s \n' "$*" >> "${NOTEFILE}"; fi ;;
   esac
 }
 
@@ -364,13 +376,14 @@ fi
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
 declare -a source_files=(
-  ${HOME}/.bash_colors      # PS1 and other terminal color codes to names
-  ${HOME}/.bash_aliases     # Common aliases
-  ${HOME}/.bash_functions   # Common functions
-  ${HOME}/.bash_git         # Git Functions and aliases
-  ${HOME}/.bash_server      # Functions and aliases usually used only on servers
-  ${HOME}/.bash*.local      # Local and private settings not under version control (example: credentials)
-  ${HOME}/.fzf.bash         # Source ~/.fzf.bash
+  ${HOME}/.bash_colors             # PS1 and other terminal color codes to names
+  ${HOME}/.bash_aliases            # Common aliases
+  ${HOME}/.bash_functions          # Common functions
+  ${HOME}/.bash_git                # Git Functions and aliases
+  ${HOME}/.bash_server             # Functions and aliases usually used only on servers
+  ${HOME}/.bash*.local             # Local and private settings not under version control (example: credentials)
+  ${HOME}/.fzf.bash                # Source ~/.fzf.bash
+  ${HOME}/bin/forgit.plugin.zsh    # Source forgit git fzf helper
   )
 for file in ${source_files[*]}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------

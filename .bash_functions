@@ -47,7 +47,7 @@ tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find
 tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
 
 # Show formatted ps of user processes
-psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command ; }
+psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command  --cols $COLUMNS ; }
 
 ## Find Top10 most used commands in history
 tools-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
@@ -74,9 +74,20 @@ tools-logtail-color() {
 ## Show system status
 tools-status() {
   printf "\n\e[30;42m  ***** SYSTEM INFORMATION *****  \e[0m\n"; hostnamectl
+  printf "%s      Manufacturer: $(cat /sys/class/dmi/id/chassis_vendor)"
+  printf "%s\n      Product Name: $(cat /sys/class/dmi/id/product_name)"
+  printf "%s\n      Machine Type: $(vserver=$(lscpu | grep Hypervisor | wc -l); if [ $vserver -gt 0 ]; then echo "VM"; else echo "Physical"; fi)"
+  printf "%s\n  Operating System: $(hostnamectl | grep "Operating System" | cut -d ' ' -f5-)"
+  printf "%s\n            Kernel: $(uname -r)"
+  printf "%s\n      Architecture: $(arch)"
+  printf "%s\n    Processor Name: $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')"
+  printf "%s\n    System Main IP: $(hostname -I | awk '{print $0}')"
+  printf "%s\n  Server Date/Time: $(printf '%(%m-%d-%Y %H:%M:%S)T' -1)"
+  printf "\n"
   printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
   printf "\n\e[30;42m  ***** MEMORY / SWAP *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'; free -m | awk 'NR==3{printf "  Swap Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
   printf "\n\e[30;42m  ***** DISK SPACE *****  \e[0m\n"; df -x tmpfs -x devtmpfs -x overlay -hT |sort -r -k 6,6
+  disklow="$(df -PTh -x tmpfs -x devtmpfs -x cdrom -x overlay | grep -vE '^Filesystem' | awk '{ if($6 > 90) print $0 }')"; if [[ -n "${disklow[@]}" ]]; then printf "\n"; printf "%s\n" "--- WARNING DISK SPACE LOW (Used: >90%) ---" "${disklow[@]}"; fi
   printf "\n\e[30;42m  ***** TOP 10 [MEM / CPU / TIME] *****  \e[0m\n"; paste <(printf %s "$(ps -eo %mem,comm --sort=-%mem | head -n 11)") <(printf %s "$(ps -eo %cpu,comm --sort=-%cpu | head -n 11)") <(printf %s "$(ps -eo time,comm --sort=-time | head -n 11)") | column -s $'\t' -t
 }
 
