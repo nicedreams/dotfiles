@@ -83,6 +83,8 @@ tools-status() {
   printf "%s\n    Processor Name: $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')"
   printf "%s\n    System Main IP: $(hostname -I | awk '{print $0}')"
   printf "%s\n  Server Date/Time: $(printf '%(%m-%d-%Y %H:%M:%S)T' -1)"
+  cputemp=$(</sys/class/thermal/thermal_zone0/temp)
+  printf "%s\n   CPU Tempurature: $((cputemp/1000))c"
   printf "\n"
   printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
   printf "\n\e[30;42m  ***** MEMORY / SWAP *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'; free -m | awk 'NR==3{printf "  Swap Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'

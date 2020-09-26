@@ -331,15 +331,16 @@ safeedit() { cp "${1}" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "${1}" ;
 # note function that can run commands
 export NOTEFILE="${HOME}/.note"
 note() {
-  if [[ ! -e ${NOTEFILE} ]]; then touch ${NOTEFILE}; fi
+  if [[ ! -e "${NOTEFILE}" ]]; then touch "${NOTEFILE}"; fi
   case "$1" in
     [1-9]*) line=$(sed -n "${1}"p "${NOTEFILE}"); eval "${line}" ;;
-    --clear) > "${NOTEFILE}" ;;
-    -e) ${EDITOR} "${NOTEFILE}" ;;
+    --clear) read -p "Press Enter to clear notefile contents or CTRL+C to cancel: " read_null; > "${NOTEFILE}" && printf "%sCleared ${NOTEFILE} contents!\n" ;;
+    -l|--last|--history|--command) tail -n1 "${HOME}"/.bash_history >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
+    -e) "${EDITOR}" "${NOTEFILE}" ;;
     -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${NOTEFILE}" && printf "%sRemoved line ${2} from ${NOTEFILE}\n" ; fi ;;
     -b|--backup) cp "${NOTEFILE}" "${NOTEFILE}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${NOTEFILE}\n" ;;
-    -c|--change) if [[ -z "$2" ]]; then export NOTEFILE="${HOME}/.note"; else export NOTEFILE="$2"; fi ;;
-    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${NOTEFILE}\n" ;;
+    -c|--change) if [[ -z "$2" ]]; then export NOTEFILE="${HOME}/.note"; else export NOTEFILE="$2"; fi; printf "%sChanged notefile path to: ${NOTEFILE}\n";;
+    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -l\t\t:add last command entered in ~/.bash_history\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${NOTEFILE}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${NOTEFILE}"; else printf '%s \n' "$*" >> "${NOTEFILE}"; fi ;;
   esac
 }
