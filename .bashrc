@@ -136,7 +136,7 @@ fi
 # ║ Set PATH to include user custom paths                                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Includes ${HOME}/.local/bin/
-if [[ -d "${HOME}/bin" ]]; then
+if [[ -d "${HOME}/.local/bin" ]]; then
   if [[ "$UID" -ne 0 ]]; then
     PATH="${PATH}:${HOME}/.local/bin"
   fi
