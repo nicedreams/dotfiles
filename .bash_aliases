@@ -52,7 +52,7 @@ alias tools-du='du -shx {,.[^.]}* | sort -hk1'
 
 ## apt update/upgrade
 #alias tools-upgrade='sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove --purge -y && sudo apt clean -y && sudo apt autoclean -y'
-alias tools-upgrade='apt update && sudo apt full-upgrade -y --auto-remove'
+alias tools-upgrade='sudo apt update && sudo apt full-upgrade -y --auto-remove'
 
 ## check important logs for fail/error/corrupt/critial messages
 #alias tools-logcheck='sudo grc tail -vf /var/log/{messages,syslog}'
