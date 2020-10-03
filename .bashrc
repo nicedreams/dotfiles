@@ -133,13 +133,18 @@ else
 fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Set PATH so it includes user's private bin if it exists                    ║
+# ║ Set PATH to include user custom paths                                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+# Includes ${HOME}/.local/bin/
 if [[ -d "${HOME}/bin" ]]; then
   if [[ "$UID" -ne 0 ]]; then
-    # Includes only ${HOME}/bin/ and not sub directories
-    #PATH="${HOME}/bin:${PATH}"
-    # Includes all sub directories in ${HOME}/bin/
+    PATH="${PATH}:${HOME}/.local/bin"
+  fi
+fi
+
+# Recursive include all sub directories in ${HOME}/bin/
+if [[ -d "${HOME}/bin" ]]; then
+  if [[ "$UID" -ne 0 ]]; then
     PATH="${PATH}$( find ${HOME}/bin/ -type d -printf ":%p" )"
   fi
 fi
@@ -208,9 +213,11 @@ alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/mast
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ ALIASES                                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-command -v curl &> /dev/null && alias whatismyip="curl http://ipecho.net/plain; echo"
 command -v tmux &> /dev/null && alias tmux-ns='tmux new-session -s'
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
+command -v xclip &> /dev/null && alias xcopy='xclip -selection clipboard'
+command -v xclip &> /dev/null && alias xpaste='xclip -selection clipboard -o'
+command -v curl &> /dev/null && alias whatismyip="curl http://ipecho.net/plain; echo"
 command -v vim &> /dev/null && alias vi='vim'
 # -----------------------------------------------------------------------------
 alias forgit-log='glo'
@@ -244,14 +251,13 @@ alias mnt='mount | grep -E ^/dev | column -t'   # Show mount in columns
 alias f='sudo $(history -p !!)'                 # Repeat last command using sudo aka 'fuck'
 # -----------------------------------------------------------------------------
 alias ls='ls -h --color'
-alias l="ls -lv --group-directories-first --color"
-alias ll='ls -lhAF --color'
-alias lla='ll -A'           #  Show hidden files.
+alias l="ls -lhF --group-directories-first --color"
+alias ll='ls -lhAF --group-directories-first --color'
 alias llx='ls -lXB'         #  Sort by extension.
 alias lls='ls -lSr'         #  Sort by size, biggest last.
 alias llt='ls -ltr'         #  Sort by date, most recent last.
-alias llc='ls -ltcr'        #  Sort by/show change time,most recent last.
-alias llu='ls -ltur'        #  Sort by/show access time,most recent last.
+alias lltc='ls -ltcr'       #  Sort by/show change time, most recent last.
+alias lltu='ls -ltur'       #  Sort by/show access time, most recent last.
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ GRC Colors - apt install grc (Put at end of any aliases in .bashrc)        ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
@@ -324,7 +330,8 @@ cpuinfo() { lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)' ; }
 # Create date stamp backup copy of file or directory
 backupfile() { cp "${1}" "${1}"-"$(date +%Y-%m-%d_%H.%M.%S)" ; }
 # Create date stamp backup gzip of file or directory
-backupdir() { tar -czvf "${1%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%/}" ; }
+#backupdir() { tar -czvf "${1%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%/}" ; }
+backupdir() { tar -czvf "${1%%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%%/}/" ; }
 # Make backup before editing file
 safeedit() { cp "${1}" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "${1}" ; }
 #------------------------------------------------------------------------------
@@ -335,12 +342,13 @@ note() {
   case "$1" in
     [1-9]*) line=$(sed -n "${1}"p "${NOTEFILE}"); eval "${line}" ;;
     --clear) read -p "Press Enter to clear notefile contents or CTRL+C to cancel: " read_null; > "${NOTEFILE}" && printf "%sCleared ${NOTEFILE} contents!\n" ;;
-    -l|--last|--history|--command) tail -n1 "${HOME}"/.bash_history >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
+    -l|--last|--history|--command) tail -n1 "${HISTFILE}" >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
     -e) "${EDITOR}" "${NOTEFILE}" ;;
     -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${NOTEFILE}" && printf "%sRemoved line ${2} from ${NOTEFILE}\n" ; fi ;;
+    -dd) sed -i '/^ *$/d' "${NOTEFILE}" && printf "%sDeleted blank lines from ${NOTEFILE}\n" ;;
     -b|--backup) cp "${NOTEFILE}" "${NOTEFILE}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${NOTEFILE}\n" ;;
     -c|--change) if [[ -z "$2" ]]; then export NOTEFILE="${HOME}/.note"; else export NOTEFILE="$2"; fi; printf "%sChanged notefile path to: ${NOTEFILE}\n";;
-    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -l\t\t:add last command entered in ~/.bash_history\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${NOTEFILE}\n" ;;
+    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -l\t\t:add last command entered in ~/.bash_history\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -dd\t\t:delete blank lines from note file\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${NOTEFILE}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${NOTEFILE}"; else printf '%s \n' "$*" >> "${NOTEFILE}"; fi ;;
   esac
 }

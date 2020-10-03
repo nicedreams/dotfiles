@@ -36,7 +36,7 @@ alias tools-dmesg-err='dmesg -l err,crit,alert'
 alias tools-ps-time='ps -eo pid,comm,lstart,etime,time,args'
 
 ## display wan ip
-alias tools-show-wanip='curl ipv4.icanhazip.com'
+alias tools-whatismyip='curl ipv4.icanhazip.com'
 
 ## how far down the su (switch user) rabbit hole are we
 alias tools-sulevel='echo "logname:" $(logname) ; pstree -s $$ | grep sh- -o | wc -l'

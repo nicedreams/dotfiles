@@ -8,6 +8,38 @@
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 
+# Install commonly used apps
+tools-install-apps() {
+  # Apt Packages [Uncomment to include packages]
+  apt_install=()
+  apt_install+=(grc figlet tmux xclip rsync nano ncdu unzip wget curl openssh-server htop bash-completion util-linux lsb-release psmisc tree less vim git)
+  apt_install+=( mailutils mutt)
+  apt_install+=( python3 python3-pip)
+  #apt_install+=( apt-transport-https ca-certificates gnupg2 software-properties-common)
+  #apt_install+=( fd-find)
+  #apt_install+=( ruby-full)
+  apt_install+=( etckeeper)
+  apt_install+=( lnav)
+  apt_install+=( ranger atool highlight caca-utils w3m mediainfo poppler-utils)
+  #apt_install+=( iputils-ping traceroute)
+  #apt_install+=( dnsutils)
+  apt_install+=( nmon)
+  #apt_install+=( bmon iftop iotop nethogs hdparm pciutils lsof)
+  #apt_install+=( sysstat)
+  #apt_install+=( vnstat)
+  #apt_install+=( smartmontools hddtemp lm-sensors)
+  #apt_install+=( libncurses5-dev libncursesw5-dev)
+  #apt_install+=( gcc build-essentials)
+
+  printf "%sFunction to install commonly used applications:\n${apt_install[*]}\n\n"
+  read -p "Install selected packages [Y/N]? " -n 1 -r
+  echo # move to a new line
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get install "${apt_install[@]}"
+  fi
+}
+
 # broot function
 br() {
     f=$(mktemp)
@@ -29,9 +61,6 @@ br() {
     eval "$d"
 }
 
-# Show alert message in red on white colors
-msg-alert() { printf "%s\e[1;37m\e[41m ${*} \e[m\n" ; }
-
 ## Download/Update dotfiles from github via curl
 dotfiles-download() { cd ${HOME}; curl -#L https://github.com/nicedreams/dotfiles/archive/master.tar.gz | tar -xzv --strip-components 1 --exclude={README.md,LICENSE} ; }
 
@@ -45,12 +74,28 @@ tools-swap-usage() { find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readabl
 # umask of 077 is good for a completely private system. No other user can read or write your data.
 tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664; }
 tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
+tools-reset-sanitize() { chmod -R u=rwX,g=rX,o= "$@" ;}
 
 # Show formatted ps of user processes
 psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command  --cols $COLUMNS ; }
 
-## Find Top10 most used commands in history
-tools-history10() { history | awk '{print $4}' | sort  | uniq --count | sort --numeric-sort --reverse | head -10; }
+# Create tar/bzip2 of remote server - pull type backup
+backup-tar-pull() {
+  source="${1%/}"
+  destination="${2%/}"
+  if [[ -z "${source}" ]] || [[ -z "${destination}" ]]; then
+    printf "%sCreate tar/bzip2 of remote server to local directory.\nRemote directories: /root /etc /home /usr/local/bin\n\nUsage:\n  backup-tar-pull user@server /destination\n\n"
+  else
+  ssh "${source}" tar -c -v --bzip2 \
+    --ignore-case \
+    --exclude=/*/{.cache,.git,.gvfs,.thumbnails,.local/share/Trash,.mozilla,.dotfiles,tmp,Downloads,ISO*,rdiff-backup,rsyncsnap,backup*,Sync,syncthing,git,restic*} \
+    --exclude-caches-all \
+    --exclude-vcs \
+    --one-file-system \
+    -f - /root/ /etc/ /home/ /usr/local/bin/ > \
+    "${destination}"/"${source}"_"$(date +%Y-%m-%d_%H.%M.%S)".tar.bz2
+  fi
+}
 
 # List terminal color pallet
 tools-colors-terminal() { for i in {0..255}; do printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" "$i" ; if ! (( ("$i" + 1 ) % 8 )); then echo ; fi ; done; }
@@ -67,7 +112,7 @@ tools-fail2ban-status() {
 
 ## Color log tail
 tools-logtail-color() {
-  if [ $# -eq 0 ]; then sudo tail -f /var/log/{syslog,messages}; fi
+  #if [ $# -eq 0 ]; then sudo tail -f /var/log/{syslog,messages}; fi
   if [ $# -eq 1 ]; then sudo tail -f /var/log/{syslog,messages} | perl -pe 's/.*"$1".*/\e[1;31m$&\e[0m/g'; fi
 }
 
@@ -83,12 +128,11 @@ tools-status() {
   printf "%s\n    Processor Name: $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')"
   printf "%s\n    System Main IP: $(hostname -I | awk '{print $0}')"
   printf "%s\n  Server Date/Time: $(printf '%(%m-%d-%Y %H:%M:%S)T' -1)"
-  cputemp=$(</sys/class/thermal/thermal_zone0/temp)
-  printf "%s\n   CPU Tempurature: $((cputemp/1000))c"
+  cputemp=$(</sys/class/thermal/thermal_zone0/temp); printf "%s\n   CPU Tempurature: $((cputemp/1000))c"
   printf "\n"
   printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
   printf "\n\e[30;42m  ***** MEMORY / SWAP *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'; free -m | awk 'NR==3{printf "  Swap Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
-  printf "\n\e[30;42m  ***** DISK SPACE *****  \e[0m\n"; df -x tmpfs -x devtmpfs -x overlay -hT |sort -r -k 6,6
+  printf "\n\e[30;42m  ***** DISK SPACE *****  \e[0m\n"; df -x tmpfs -x devtmpfs -x overlay -hT | sort -r -k 6,6
   disklow="$(df -PTh -x tmpfs -x devtmpfs -x cdrom -x overlay | grep -vE '^Filesystem' | awk '{ if($6 > 90) print $0 }')"; if [[ -n "${disklow[@]}" ]]; then printf "\n"; printf "%s\n" "--- WARNING DISK SPACE LOW (Used: >90%) ---" "${disklow[@]}"; fi
   printf "\n\e[30;42m  ***** TOP 10 [MEM / CPU / TIME] *****  \e[0m\n"; paste <(printf %s "$(ps -eo %mem,comm --sort=-%mem | head -n 11)") <(printf %s "$(ps -eo %cpu,comm --sort=-%cpu | head -n 11)") <(printf %s "$(ps -eo time,comm --sort=-time | head -n 11)") | column -s $'\t' -t
 }
@@ -97,7 +141,7 @@ tools-status() {
 tools-virt() {
   printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && sudo docker ps
   printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && sudo lxc-ls -f | grep RUNNING
-  printf "\n\e[30;42m  ***** RUNNING KVM VIRTUAL MACHINES ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && sudo virsh list --all | grep running ; echo
+  printf "\n\e[30;42m  ***** RUNNING KVM GUESTS ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && sudo virsh list --all | grep running ; echo
 }
 
 ## Write a horizontal line of characters
@@ -224,3 +268,4 @@ extract() {
     done
   fi
 }
+
