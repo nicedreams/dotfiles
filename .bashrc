@@ -135,16 +135,14 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Set PATH to include user custom paths                                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-# Includes ${HOME}/.local/bin/
-if [[ -d "${HOME}/.local/bin" ]]; then
-  if [[ "$UID" -ne 0 ]]; then
+if [[ "$UID" -ne 0 ]]; then
+  # Includes ${HOME}/.local/bin/
+  if [[ -d "${HOME}/.local/bin" ]]; then
     PATH="${PATH}:${HOME}/.local/bin"
   fi
-fi
 
-# Recursive include all sub directories in ${HOME}/bin/
-if [[ -d "${HOME}/bin" ]]; then
-  if [[ "$UID" -ne 0 ]]; then
+  # Recursive include all sub directories in ${HOME}/bin/
+  if [[ -d "${HOME}/bin" ]]; then
     PATH="${PATH}$( find ${HOME}/bin/ -type d -printf ":%p" )"
   fi
 fi
