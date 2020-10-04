@@ -83,41 +83,43 @@ PS1RESET="\[\e[m\]"         # Color Reset
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-# Set variable identifying the chroot you work in (used in the prompt below)
-if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
-  debian_chroot="$(cat /etc/debian_chroot)"
-fi
-
-# Terminal color support else set PS1 with no colors
-# Use normal colored prompt
-if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-  # Get color variable depending on root(red) or user(green)
-  if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
-
-  # Set PS1 color depending on root(red) or user(green)
-  export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
-  #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
-
-  # Append git branch to current PS1 if git installed
-  # Do not run if git script detected
-  if [[ -z "$(command -v git &> /dev/null)" ]] && [[ ! -f "${HOME}"/.bash_git ]]; then
-    export GIT_PS1_SHOWDIRTYSTATE=1
-    export GIT_PS1_SHOWCOLORHINTS=1
-    export GIT_PS1_SHOWUNTRACKEDFILES=1
-    # Use built-in __git_ps1 if exist and fallback to parse_git_branch function if not
-    if [[ -n "$(type -t __git_ps1)" ]]; then
-      export PS1="${PS1}\$(__git_ps1 '(%s)') "
-    else
-      export PS1="${PS1}\$(parse_git_branch)"
-    fi
-  fi
+# Use custom PS1 prompt script if ~/.bash_prompt exist
+if [[ -e "${HOME}"/.bash_prompt ]]; then
+  source "${HOME}"/.bash_prompt
 else
-  # Basic PS1 without color
-  PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-fi
+  # Set variable identifying the chroot you work in (used in the prompt below)
+  if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
+    debian_chroot="$(cat /etc/debian_chroot)"
+  fi
 
-# Use custom PS1 prompt script if ~/.bash_prompt exists
-if [[ -e "${HOME}"/.bash_prompt ]]; then source "${HOME}"/.bash_prompt; fi
+  # Terminal color support else set PS1 with no colors
+  # Use normal colored prompt
+  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # Get color variable depending on root(red) or user(green)
+    if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
+
+    # Set PS1 color depending on root(red) or user(green)
+    export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
+    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
+
+    # Append git branch to current PS1 if git installed
+    # Do not run if git script detected
+    if [[ -z "$(command -v git &> /dev/null)" ]] && [[ ! -f "${HOME}"/.bash_git ]]; then
+      export GIT_PS1_SHOWDIRTYSTATE=1
+      export GIT_PS1_SHOWCOLORHINTS=1
+      export GIT_PS1_SHOWUNTRACKEDFILES=1
+      # Use built-in __git_ps1 if exist and fallback to parse_git_branch function if not
+      if [[ -n "$(type -t __git_ps1)" ]]; then
+        export PS1="${PS1}\$(__git_ps1 '(%s)') "
+      else
+        export PS1="${PS1}\$(parse_git_branch)"
+      fi
+    fi
+  else
+    # Basic PS1 without color
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+  fi
+fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Export path for root vs users                                              ║
