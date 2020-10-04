@@ -25,6 +25,7 @@ tools-install-apps() {
   #apt_install+=( dnsutils)
   apt_install+=( nmon)
   #apt_install+=( bmon iftop iotop nethogs hdparm pciutils lsof)
+  #apt_install+=( virt-top)
   #apt_install+=( sysstat)
   #apt_install+=( vnstat)
   #apt_install+=( smartmontools hddtemp lm-sensors)

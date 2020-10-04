@@ -34,7 +34,7 @@ shopt -s cdspell        # minor errors in the spelling of a directory component 
 #bind "set mark-symlinked-directories on"  # Immediately add a trailing slash when autocompleting symlinks to directories
 
 # number of trailing directory components to retain when expanding the \w and \W prompt string escapes
-PROMPT_DIRTRIM=3
+PROMPT_DIRTRIM=4
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Auto Logout In Seconds After No Input                                      ║
@@ -83,10 +83,6 @@ PS1RESET="\[\e[m\]"         # Color Reset
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-parse_git_branch() {
-  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1) /'
-}
-
 # Set variable identifying the chroot you work in (used in the prompt below)
 if [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; then
   debian_chroot="$(cat /etc/debian_chroot)"
@@ -120,8 +116,8 @@ else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
 
-# Use fancyprompt script if exists
-#if [[ -e "${HOME}"/.bash_fancyprompt ]]; then source "${HOME}"/.bash_fancyprompt; fi
+# Use custom PS1 prompt script if ~/.bash_prompt exists
+if [[ -e "${HOME}"/.bash_prompt ]]; then source "${HOME}"/.bash_prompt; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Export path for root vs users                                              ║
@@ -211,6 +207,7 @@ alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/mast
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ ALIASES                                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+command -v tmux &> /dev/null && alias tmuxa='tmux a || tmux new-session'
 command -v tmux &> /dev/null && alias tmux-ns='tmux new-session -s'
 command -v tmux &> /dev/null && alias tmux-hn='tmux attach -t ${HOSTNAME} || tmux new-session -t ${HOSTNAME}'
 command -v xclip &> /dev/null && alias xcopy='xclip -selection clipboard'
@@ -383,14 +380,14 @@ fi
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
 declare -a source_files=(
-  ${HOME}/.bash_colors             # PS1 and other terminal color codes to names
-  ${HOME}/.bash_aliases            # Common aliases
-  ${HOME}/.bash_functions          # Common functions
-  ${HOME}/.bash_git                # Git Functions and aliases
-  ${HOME}/.bash_server             # Functions and aliases usually used only on servers
-  ${HOME}/.bash*.local             # Local and private settings not under version control (example: credentials)
-  ${HOME}/.fzf.bash                # Source ~/.fzf.bash
-  ${HOME}/bin/forgit.plugin.zsh    # Source forgit git fzf helper
+  "${HOME}"/.bash_colors             # PS1 and other terminal color codes to names
+  "${HOME}"/.bash_aliases            # Common aliases
+  "${HOME}"/.bash_functions          # Common functions
+  "${HOME}"/.bash_git                # Git Functions and aliases
+  "${HOME}"/.bash_server             # Functions and aliases usually used only on servers
+  "${HOME}"/.bash*.local             # Local and private settings not under version control (example: credentials)
+  "${HOME}"/.fzf.bash                # Source ~/.fzf.bash
+  "${HOME}"/bin/forgit.plugin.zsh    # Source forgit git fzf helper
   )
 for file in ${source_files[*]}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------

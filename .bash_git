@@ -27,6 +27,11 @@ PS1CYAN="\[\e[1;36m\]"        # Cyan
 PS1WHITE="\[\e[1;37m\]"       # White
 PS1RESET="\[\e[m\]"         # Color Reset
 
+#------------------------------------------------------------------------------
+# Append git branch to current PS1 if git installed
+#------------------------------------------------------------------------------
+command -v git &> /dev/null && export PS1="$PS1\$(parse_bash_git_branch)"
+
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ git PS1 Prompt Functions                                                   ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
@@ -62,11 +67,6 @@ parse_git_dirty() {
   if [ "${dirty}" == "0" ]; then bits="${RED}!${bits}${RESET}"; fi
   if [ ! "${bits}" == "" ]; then echo " ${bits}"; else echo ""; fi
 }
-
-#------------------------------------------------------------------------------
-# Append git branch to current PS1 if git installed
-#------------------------------------------------------------------------------
-command -v git &> /dev/null && export PS1="$PS1\$(parse_bash_git_branch)"
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Git Aliases / Functions                                                    ║
