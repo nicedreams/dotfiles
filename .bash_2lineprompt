@@ -21,9 +21,9 @@ _PROMPT() {
   PS1="[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})"
   PS1+="${PS1WHITE} ╺─╸ ${PS1RESET}"
   PS1+="[${PS1BLUE}\w${PS1RESET}]"
-  PS1+="${PS1MAGENTA} \$(__git_ps1 '(%s)')${PS1RESET}"
+  PS1+=" \$(__git_ps1 '(%s)')"
   PS1+="\n"
-  PS1+="[${PS1YELLOW}\A${PS1RESET}]"
+  PS1+="[${PS1PURPLE}\A${PS1RESET}]"
   PS1+="${PS1RESET}$_EXIT_STATUS_STR${PS1RESET}"
   PS1+="${PS1RESET} >> ${PS1RESET}"
   unset _EXIT_STATUS_STR
