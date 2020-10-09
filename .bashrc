@@ -84,6 +84,7 @@ PS1RESET="\[\e[m\]"         # Color Reset
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Use custom PS1 prompt script if ~/.bash_prompt exist
+# Ex: ln -s ~/.bash_prompt_fancy ~/.bash_prompt
 if [[ -e "${HOME}"/.bash_prompt ]]; then
   source "${HOME}"/.bash_prompt
 else
@@ -133,16 +134,12 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ Set PATH to include user custom paths                                      ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+# Do not run if root user
 if [[ "$UID" -ne 0 ]]; then
   # Includes ${HOME}/.local/bin/
-  if [[ -d "${HOME}/.local/bin" ]]; then
-    PATH="${PATH}:${HOME}/.local/bin"
-  fi
-
+  if [[ -d "${HOME}/.local/bin" ]]; then PATH="${PATH}:${HOME}/.local/bin"; fi
   # Recursive include all sub directories in ${HOME}/bin/
-  if [[ -d "${HOME}/bin" ]]; then
-    PATH="${PATH}$( find ${HOME}/bin/ -type d -printf ":%p" )"
-  fi
+  if [[ -d "${HOME}/bin" ]]; then PATH="${PATH}$( find ${HOME}/bin/ -type d -printf ":%p" )"; fi
 fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
@@ -216,6 +213,7 @@ command -v xclip &> /dev/null && alias xcopy='xclip -selection clipboard'
 command -v xclip &> /dev/null && alias xpaste='xclip -selection clipboard -o'
 command -v curl &> /dev/null && alias whatismyip="curl http://ipecho.net/plain; echo"
 command -v vim &> /dev/null && alias vi='vim'
+command -v ranger &> /dev/null && alias r='ranger'
 # -----------------------------------------------------------------------------
 alias forgit-log='glo'
 alias forgit-diff='gd'
@@ -227,6 +225,7 @@ alias forgit-clean='gclean'
 alias forgit-stash-show='gss'
 alias forgit-cherry-pick='gcp'
 # -----------------------------------------------------------------------------
+alias f='sudo $(history -p !!)'    # Repeat last command using sudo aka 'fuck'
 alias diff='diff --color'
 alias rm='rm --preserve-root'
 alias top='top -E g'
@@ -244,8 +243,7 @@ alias df='df -hT'
 alias free='free -h'
 alias cd..="cd .."
 alias ..="cd .."
-alias mnt='mount | grep -E ^/dev | column -t'   # Show mount in columns
-alias f='sudo $(history -p !!)'                 # Repeat last command using sudo aka 'fuck'
+alias mnt='mount | grep -E ^/dev | column -t'    # Show mount in columns
 # -----------------------------------------------------------------------------
 alias ls='ls -h --color'
 alias l="ls -lhF --group-directories-first --color"
@@ -259,7 +257,7 @@ alias lltu='ls -ltur'       #  Sort by/show access time, most recent last.
 # ║ GRC Colors - apt install grc (Put at end of any aliases in .bashrc)        ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Colourify Commands
-GRC="$(which grc)"
+GRC="$(command -v grc)"
 if [ "$TERM" != dumb ] && [ -n "$GRC" ]; then
   alias colourify="$GRC -es --colour=auto"
   alias blkid='colourify blkid'
@@ -303,7 +301,7 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ exa - ls replacement                                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-if [[ -f ~/bin/exa ]]; then
+if [[ -f $(command -v exa) ]]; then
   alias l='exa -l'
   alias ll='exa -la'
   alias llt='exa -la --tree --level=2'
@@ -327,7 +325,6 @@ cpuinfo() { lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)' ; }
 # Create date stamp backup copy of file or directory
 backupfile() { cp "${1}" "${1}"-"$(date +%Y-%m-%d_%H.%M.%S)" ; }
 # Create date stamp backup gzip of file or directory
-#backupdir() { tar -czvf "${1%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%/}" ; }
 backupdir() { tar -czvf "${1%%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%%/}/" ; }
 # Make backup before editing file
 safeedit() { cp "${1}" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "${1}" ; }
@@ -339,7 +336,8 @@ note() {
   case "$1" in
     [1-9]*) line=$(sed -n "${1}"p "${NOTEFILE}"); eval "${line}" ;;
     --clear) read -p "Press Enter to clear notefile contents or CTRL+C to cancel: " read_null; > "${NOTEFILE}" && printf "%sCleared ${NOTEFILE} contents!\n" ;;
-    -l|--last|--history|--command) tail -n1 "${HISTFILE}" >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
+    #-l|--last|--history|--command) tail -n1 "${HISTFILE}" >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
+    -l|--last|--history|--command) (history -p '!!') >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
     -e) "${EDITOR}" "${NOTEFILE}" ;;
     -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${NOTEFILE}" && printf "%sRemoved line ${2} from ${NOTEFILE}\n" ; fi ;;
     -dd) sed -i '/^ *$/d' "${NOTEFILE}" && printf "%sDeleted blank lines from ${NOTEFILE}\n" ;;

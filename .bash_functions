@@ -68,6 +68,79 @@ dotfiles-download() { cd ${HOME}; curl -#L https://github.com/nicedreams/dotfile
 # Export sar data to file
 tools-export-sar() { LC_ALL=C sar -A > /root/sar-${HOSTNAME}-$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1).txt ; }
 
+# Manage Services
+tools-start() { systemctl start $@.service ; }
+tools-stop() { systemctl stop $@.service ; }
+tools-status() { systemctl status $@.service ; }
+tools-restart() { systemctl restart $@.service ; }
+
+# Sysstat - sar
+tools-sar-cpu() { sar -h -u ALL ; }
+tools-sar-cpu-cores() { sar -P ALL ; }
+tools-sar-mem() { sar -h -r ; }
+tools-sar-swap() { sar -h -S ; }
+tools-sar-io() { sar -b ; }
+tools-sar-io-dev() { sar -h -p -d ; }
+tools-sar-load() { sar -q ; }
+tools-sar-net() { sar -h -n DEV ; }
+
+# strace
+tools-whatfiles() { strace -fe trace=creat,open,openat,unlink,unlinkat $* ; }
+
+## dmesg (show only err/crit/alert messages)
+tools-dmesg-err() { dmesg -l err,crit,alert ; }
+
+## processes (list processes of current user)
+tools-ps-time() { ps -eo pid,comm,lstart,etime,time,args ; }
+
+## display wan ip
+tools-whatismyip() { curl ipv4.icanhazip.com ; }
+
+## how far down the su (switch user) rabbit hole are we
+tools-sulevel() { echo "logname:" $(logname) ; pstree -s $$ | grep sh- -o | wc -l ; }
+
+## do df command showing file system and hiding tmpfs, devtmpfs, overlay
+tools-df() { df -hT --total -x tmpfs -x devtmpfs -x overlay ; }
+
+## top10 du treesize current directory
+#tools-du() { du -hxc --max-depth=1 | sort -h ; }
+#tools-du() { du -shx . | sort -h ; }
+tools-du() { du -shx {,.[^.]}* | sort -hk1 ; }
+#tools-du() { du -shx {,.[^.]}* 2>> /dev/null | sort -hk1 ; }
+
+## apt update/upgrade
+#tools-upgrade() { sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove --purge -y && sudo apt clean -y && sudo apt autoclean -y ; }
+tools-upgrade() { sudo apt update && sudo apt full-upgrade -y --auto-remove ; }
+
+## check important logs for fail/error/corrupt/critial messages
+#tools-logcheck() { sudo grc tail -vf /var/log/{messages,syslog} ; }
+#tools-logcheck() { sudo grc grep -i -e fail -e error -e corrupt -e critical /var/log/{syslog,messages,kern.log} ; }
+tools-logcheck() { grc zgrep -i -e fail -e error -e corrupt -e critical /var/log/{syslog*,messages*,kern*} || zgrep -i -e fail -e error -e corrupt -e critical /var/log/{syslog*,messages*,kern*} ; }
+
+## watch cpu speed in realtime
+tools-cpu-speed() { watch -n1 "cat /proc/cpuinfo | grep "MHz"" ; }
+
+## search ps and format nicely (takes $1)
+tools-search-ps() { ps aux | grep -v grep | grep -i -e VSZ -e ; }
+
+# Find duplicate files within current directory (finds by file size then checks mdhash)
+tools-find-duplicates() { find . -not -empty -type f -printf "%s\n" | sort -rn | uniq -d | xargs -I{} -n1 find . -type f -size {}c -print0 | xargs -0 md5sum | sort | uniq -w32 --all-repeated=separate ; }
+
+### Show mount points within column format
+tools-mount-list() { mount |column -t ; }
+
+### Show open ports using ss command
+tools-ss() { ss -tulanp ; }
+
+### DOCKER
+#tools-docker-remove-all() { docker rm $(docker ps -a -q -f status=exited) ; }
+tools-docker-remove-all() { docker system purge ; }
+tools-docker-run-portainer() { docker run -d --name=portainer -v /srv/docker/portainer/data:/data -v /var/run/docker.sock:/var/run/docker.sock -e PGID=1001 -e PUID=1001 -e TZ=America/Phoenix -p 9000:9000 --restart no portainer/portainer ; }
+tools-docker-run-dockermon() { docker run -ti -v /var/run/docker.sock:/var/run/docker.sock icecrime/docker-mon ; }
+tools-docker-run-nginx() { docker run --name nginx-pwd -d -p 80:80 -v $(pwd):/usr/share/nginx/html nginx ; }
+tools-docker-run-glances() { docker pull nicolargo/glances && docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro --pid host --network host -it docker.io/nicolargo/glances ; }
+
+
 ## list processes using swap (enable one of three options)
 tools-swap-usage() { find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- ; }
 
