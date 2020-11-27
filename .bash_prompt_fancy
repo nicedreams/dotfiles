@@ -325,6 +325,7 @@ prompt_status() {
   [[ $RETVAL -ne 0 ]] && symbols+="$(ansi_single $(fg_color red))❌"                                                     # show if last command failed
   #[[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="$(ansi_single $(fg_color bwhite))⏳"                                       # show if background jobs running
   [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="$(ansi_single $(fg_color bwhite))⏳"                                       # show if background jobs running
+  tsessions="$(tmux list-sessions 2> /dev/null | \grep -cv 'attached')"; [[ $tsessions -gt 0 ]] && symbols+="$(ansi_single $(fg_color bwhite))[$tsessions]"   # show running tmux sessions
   #[[ $UID -eq 0 ]] && symbols+="$(ansi_single $(fg_color red))🛑"                                                        # show if root user
   [[ -n $SSH_AUTH_SOCK ]] && symbols+="$(ansi_single $(fg_color yellow))🔑"                                              # show if ssh agent is active
   [[ -n $SSH_CLIENT ]] && symbols+="$(ansi_single $(fg_color bwhite))🔗"                                                 # show if connected via ssh

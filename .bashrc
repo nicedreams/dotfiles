@@ -180,11 +180,10 @@ export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quo
 # ╚════════════════════════════════════════════════════════════════════════════╝
 export LESS="-R"
 # Have less display coloured man pages
-# from: https://wiki.archlinux.org/index.php/Color_output_in_console#man
-export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
-export LESS_TERMCAP_md=$'\e[1;33m'     # begin blink
-export LESS_TERMCAP_so=$'\e[01;44;37m' # begin reverse video
-export LESS_TERMCAP_us=$'\e[01;37m'    # begin underline
+export LESS_TERMCAP_mb=$'\e[01;31m'    # begin bold
+export LESS_TERMCAP_md=$'\e[01;33m'    # begin blink
+export LESS_TERMCAP_so=$'\e[01;37m'    # begin reverse video
+export LESS_TERMCAP_us=$'\e[01;32m'    # begin underline
 export LESS_TERMCAP_me=$'\e[0m'        # reset bold/blink
 export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
 export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
@@ -237,7 +236,7 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 alias fsck='fsck -M'
-alias dmesg='dmesg --color=always -T'
+alias dmesg='dmesg -T --color=always'
 alias du='du -h'
 alias df='df -hT'
 alias free='free -h'
@@ -246,7 +245,8 @@ alias ..="cd .."
 alias mnt='mount | grep -E ^/dev | column -t'    # Show mount in columns
 # -----------------------------------------------------------------------------
 alias ls='ls -h --color'
-alias l="ls -lhF --group-directories-first --color"
+alias l='ls -lhF --group-directories-first --color'
+alias lt='ls --human-readable --size -1 -S --classify'
 alias ll='ls -lhAF --group-directories-first --color'
 alias llx='ls -lXB'         #  Sort by extension.
 alias lls='ls -lSr'         #  Sort by size, biggest last.
@@ -302,9 +302,9 @@ fi
 # ║ exa - ls replacement                                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 if [[ -f $(command -v exa) ]]; then
-  alias l='exa -l'
-  alias ll='exa -la'
-  alias llt='exa -la --tree --level=2'
+  alias l='exa -l --group-directories-first'
+  alias ll='exa -la --group-directories-first'
+  alias llt='exa -la --tree --level=2 --group-directories-first'
 fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
@@ -314,8 +314,10 @@ fi
 ranger() { if [ -z "$RANGER_LEVEL" ]; then /usr/bin/ranger "$@"; else exit; fi ; }
 # ssh copy file from server back to ssh client
 #ssh-dl(){ scp "$1" ${SSH_CLIENT%% *}:/home/ken/Downloads/ ; }
-# fzf preview
-preview() { cd "$1"; fzf --bind="enter:execute($EDITOR {})" --height=70% --preview="(bat -p --color=always --line-range 1:100 {} 2> /dev/null || head -100 {})" --preview-window=right:70%:noborder --color='fg:#bbccdd,fg+:#ddeeff,bg:#334455,preview-bg:#223344,border:#778899'; cd - ; }
+# fzf preview vertical
+preview() { cd "$1"; fzf --bind="enter:execute($EDITOR {})" --height=70% --header="$PWD" --preview="(bat -p --color=always --line-range 1:100 {} 2> /dev/null || head -100 {})" --preview-window=right:70%:noborder --color='fg:#bbccdd,fg+:#ddeeff,bg:#334455,preview-bg:#223344,border:#778899'; cd - ; }
+# fzf preview horizontal
+previewh() { cd "$1"; fzf --bind="enter:execute($EDITOR {})" --height=70% --header="$PWD" --preview="(bat -p --color=always --line-range 1:100 {} 2> /dev/null || head -100 {})" --preview-window=bottom:70%:noborder --color='fg:#bbccdd,fg+:#ddeeff,bg:#334455,preview-bg:#223344,border:#778899'; cd - ; }
 # Calculator
 calc() { echo "$(( $@ ))"; }
 #------------------------------------------------------------------------------
@@ -335,15 +337,15 @@ note() {
   if [[ ! -e "${NOTEFILE}" ]]; then touch "${NOTEFILE}"; fi
   case "$1" in
     [1-9]*) line=$(sed -n "${1}"p "${NOTEFILE}"); eval "${line}" ;;
+    -f|--fzf) notecmd=$(fzf < .note) ; eval "${notecmd}" ;;
     --clear) read -p "Press Enter to clear notefile contents or CTRL+C to cancel: " read_null; > "${NOTEFILE}" && printf "%sCleared ${NOTEFILE} contents!\n" ;;
-    #-l|--last|--history|--command) tail -n1 "${HISTFILE}" >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
-    -l|--last|--history|--command) (history -p '!!') >> "${NOTEFILE}" && printf "Added last command entered in ~/.bash_history to notefile\n" ;;
-    -e) "${EDITOR}" "${NOTEFILE}" ;;
-    -d) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${NOTEFILE}" && printf "%sRemoved line ${2} from ${NOTEFILE}\n" ; fi ;;
+    -l|--last) lastcmd=$(fc -ln "$1" "$1"); printf '%s\n' "${lastcmd##*( )}" >> "${NOTEFILE}" && printf "Added last command from bash history to notefile\n" || printf "An error happened!\n" ;;
+    -e|--edit) "${EDITOR}" "${NOTEFILE}" ;;
+    -d|--delete) if [[ -z "${2}" ]]; then printf "No input entered\n"; else sed -i "${2}d" "${NOTEFILE}" && printf "%sRemoved line ${2} from ${NOTEFILE}\n" ; fi ;;
     -dd) sed -i '/^ *$/d' "${NOTEFILE}" && printf "%sDeleted blank lines from ${NOTEFILE}\n" ;;
     -b|--backup) cp "${NOTEFILE}" "${NOTEFILE}"-"$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; printf "%sCreated backup copy of ${NOTEFILE}\n" ;;
     -c|--change) if [[ -z "$2" ]]; then export NOTEFILE="${HOME}/.note"; else export NOTEFILE="$2"; fi; printf "%sChanged notefile path to: ${NOTEFILE}\n";;
-    -h|--help) printf "%snote\t\t:displays notes\n  NUM\t\t:run line number as command\n  --clear\t:clear note file\n  -l\t\t:add last command entered in ~/.bash_history\n  -e\t\t:edit note file\n  -d #\t\t:delete note by line number\n  -dd\t\t:delete blank lines from note file\n  -b\t\t:backup note file with timestamp\n  -c PATH\t:change PATH to a different note file\n  -c\t\t:set PATH to default ~/.note\nnote PATH:\t${NOTEFILE}\n" ;;
+    -h|--help) printf "%snote\t\t\t:displays notes\n  NUM\t\t\t:run line number as command\n  -f|--fzf\t\t:run line as command (fzf)\n  --clear\t\t:clear note file\n  -l|--last\t\t:add last command entered in ~/.bash_history\n  -e|--edit\t\t:edit note file\n  -d|--delete #\t\t:delete note by line number\n  -dd\t\t\t:delete blank lines from note file\n  -b|--backup\t\t:backup note file with timestamp\n  -c|--change PATH\t:change PATH to a different note file\n  -c|--change\t\t:set PATH to default ~/.note\nCurrent note PATH:\t${NOTEFILE}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${NOTEFILE}"; else printf '%s \n' "$*" >> "${NOTEFILE}"; fi ;;
   esac
 }
@@ -390,5 +392,6 @@ declare -a source_files=(
   "${HOME}"/bin/forgit.plugin.zsh    # Source forgit git fzf helper
   )
 for file in ${source_files[*]}; do [[ -r "$file" ]] && source "$file"; done; unset file
+# Source .bash* file based on hostname extension if exist
+for file in ${HOME}/.bash*.${HOSTNAME}; do [[ -r "$file" ]] && source "$file"; done; unset file
 #------------------------------------------------------------------------------
-

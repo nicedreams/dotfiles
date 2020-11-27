@@ -50,7 +50,7 @@ set modelines=0
 set formatoptions=tqn1
 set cmdheight=1
 set backspace=indent,eol,start    " Fix backspace
-set relativenumber                " make line numbers relative to the current line
+"set relativenumber                " make line numbers relative to the current line
 "set signcolumn=yes               " always show the sign column, e.g. where lint errors are marked
 set cursorline                    " underlines the line where the cursor is
 set tabstop=2                     " number of spaces a tab counts for

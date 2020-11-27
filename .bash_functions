@@ -12,18 +12,19 @@
 tools-install-apps() {
   # Apt Packages [Uncomment to include packages]
   apt_install=()
-  apt_install+=(grc figlet tmux xclip rsync nano ncdu unzip wget curl openssh-server htop bash-completion util-linux lsb-release psmisc tree less vim git)
-  apt_install+=( mailutils mutt)
+  apt_install+=(grc figlet tmux xclip rsync nano vim ncdu unzip wget curl openssh-server htop bash-completion util-linux lsb-release psmisc tree less git)
+  #apt_install+=( mailutils mutt)
   apt_install+=( python3 python3-pip)
   #apt_install+=( apt-transport-https ca-certificates gnupg2 software-properties-common)
   #apt_install+=( fd-find)
   #apt_install+=( ruby-full)
-  apt_install+=( etckeeper)
+  #apt_install+=( etckeeper)
   apt_install+=( lnav)
   apt_install+=( ranger atool highlight caca-utils w3m mediainfo poppler-utils)
   #apt_install+=( iputils-ping traceroute)
   #apt_install+=( dnsutils)
   apt_install+=( nmon)
+  apt_install+=( mtr)
   #apt_install+=( bmon iftop iotop nethogs hdparm pciutils lsof)
   #apt_install+=( virt-top)
   #apt_install+=( sysstat)
@@ -32,12 +33,21 @@ tools-install-apps() {
   #apt_install+=( libncurses5-dev libncursesw5-dev)
   #apt_install+=( gcc build-essentials)
 
-  printf "%sFunction to install commonly used applications:\n${apt_install[*]}\n\n"
+  printf "%sFunction to install commonly used applications:\n${apt_install[*]}\n\nEdit ~/.bash_functions to enable/disable selections.\n\n"
   read -p "Install selected packages [Y/N]? " -n 1 -r
   echo # move to a new line
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
+  if [[ "$REPLY" =~ ^[Yy]$ ]]; then
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get install "${apt_install[@]}"
+  fi
+  
+  # Install fzf from git or update if exist
+  printf '%s\n\n' "Cloning fzf from git"
+  if [[ -d "${HOME}"/.fzf/ ]]; then
+    cd "${HOME}"/.fzf && git pull && ./install
+  else
+    git clone --depth 1 https://github.com/junegunn/fzf.git "${HOME}"/.fzf
+    "${HOME}"/.fzf/install
   fi
 }
 
@@ -63,16 +73,10 @@ br() {
 }
 
 ## Download/Update dotfiles from github via curl
-dotfiles-download() { cd ${HOME}; curl -#L https://github.com/nicedreams/dotfiles/archive/master.tar.gz | tar -xzv --strip-components 1 --exclude={README.md,LICENSE} ; }
+dotfiles-download() { cd ${HOME}; curl -#L https://github.com/nicedreams/dotfiles/archive/master.tar.gz | tar -xzv --strip-components 1 --exclude={README,README.md,LICENSE} ; }
 
 # Export sar data to file
 tools-export-sar() { LC_ALL=C sar -A > /root/sar-${HOSTNAME}-$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1).txt ; }
-
-# Manage Services
-tools-start() { systemctl start $@.service ; }
-tools-stop() { systemctl stop $@.service ; }
-tools-status() { systemctl status $@.service ; }
-tools-restart() { systemctl restart $@.service ; }
 
 # Sysstat - sar
 tools-sar-cpu() { sar -h -u ALL ; }
@@ -85,13 +89,11 @@ tools-sar-load() { sar -q ; }
 tools-sar-net() { sar -h -n DEV ; }
 
 # strace
-tools-whatfiles() { strace -fe trace=creat,open,openat,unlink,unlinkat $* ; }
+tools-strace() { strace -fe trace=creat,open,openat,unlink,unlinkat $* ; }
 
 ## dmesg (show only err/crit/alert messages)
-tools-dmesg-err() { dmesg -l err,crit,alert ; }
-
-## processes (list processes of current user)
-tools-ps-time() { ps -eo pid,comm,lstart,etime,time,args ; }
+#tools-dmesg-err() { dmesg -l err,crit,alert ; }
+tools-dmesg-err() { sudo dmesg -T --color=always -l alert,crit,err ; }
 
 ## display wan ip
 tools-whatismyip() { curl ipv4.icanhazip.com ; }
@@ -103,25 +105,16 @@ tools-sulevel() { echo "logname:" $(logname) ; pstree -s $$ | grep sh- -o | wc -
 tools-df() { df -hT --total -x tmpfs -x devtmpfs -x overlay ; }
 
 ## top10 du treesize current directory
-#tools-du() { du -hxc --max-depth=1 | sort -h ; }
-#tools-du() { du -shx . | sort -h ; }
 tools-du() { du -shx {,.[^.]}* | sort -hk1 ; }
-#tools-du() { du -shx {,.[^.]}* 2>> /dev/null | sort -hk1 ; }
 
 ## apt update/upgrade
-#tools-upgrade() { sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove --purge -y && sudo apt clean -y && sudo apt autoclean -y ; }
-tools-upgrade() { sudo apt update && sudo apt full-upgrade -y --auto-remove ; }
+tools-upgrade() { sudo apt update && sudo apt full-upgrade -y --auto-remove && sudo apt autoremove -y ; }
 
 ## check important logs for fail/error/corrupt/critial messages
-#tools-logcheck() { sudo grc tail -vf /var/log/{messages,syslog} ; }
-#tools-logcheck() { sudo grc grep -i -e fail -e error -e corrupt -e critical /var/log/{syslog,messages,kern.log} ; }
-tools-logcheck() { grc zgrep -i -e fail -e error -e corrupt -e critical /var/log/{syslog*,messages*,kern*} || zgrep -i -e fail -e error -e corrupt -e critical /var/log/{syslog*,messages*,kern*} ; }
+tools-logcheck() { sudo grc grep -i -e fail -e error -e corrupt -e critical /var/log/{syslog,messages,kern.log} ; }
 
 ## watch cpu speed in realtime
 tools-cpu-speed() { watch -n1 "cat /proc/cpuinfo | grep "MHz"" ; }
-
-## search ps and format nicely (takes $1)
-tools-search-ps() { ps aux | grep -v grep | grep -i -e VSZ -e ; }
 
 # Find duplicate files within current directory (finds by file size then checks mdhash)
 tools-find-duplicates() { find . -not -empty -type f -printf "%s\n" | sort -rn | uniq -d | xargs -I{} -n1 find . -type f -size {}c -print0 | xargs -0 md5sum | sort | uniq -w32 --all-repeated=separate ; }
@@ -140,7 +133,6 @@ tools-docker-run-dockermon() { docker run -ti -v /var/run/docker.sock:/var/run/d
 tools-docker-run-nginx() { docker run --name nginx-pwd -d -p 80:80 -v $(pwd):/usr/share/nginx/html nginx ; }
 tools-docker-run-glances() { docker pull nicolargo/glances && docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro --pid host --network host -it docker.io/nicolargo/glances ; }
 
-
 ## list processes using swap (enable one of three options)
 tools-swap-usage() { find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- ; }
 
@@ -153,6 +145,19 @@ tools-reset-sanitize() { chmod -R u=rwX,g=rX,o= "$@" ;}
 # Show formatted ps of user processes
 psu() { ps "$@" -u "${USER}" -o pid,%cpu,%mem,bsdtime,command  --cols $COLUMNS ; }
 
+# Backup home directory to /tmp
+tools-backup-home() {
+  local tmpdir="/tmp/${USER}@${HOSTNAME}_$(date +%Y-%m-%d_%H.%M.%S).tar.gz"
+  tar -c -v -z \
+    --ignore-case \
+    --exclude=/*/{.cache,.git,.gvfs,.ecryptfs,.Private,.xsession-errors,.thumbnails,.local/share/Trash,.mozilla,tmp,rdiff-backup,rsyncsnap,Sync,syncthing,restic*} \
+    --exclude-caches-all \
+    --exclude-vcs \
+    --one-file-system \
+    -f "${tmpdir}" "${HOME}"/*
+  mv -v "${tmpdir}" "${HOME}"/
+}
+
 # Create tar/bzip2 of remote server - pull type backup
 backup-tar-pull() {
   source="${1%/}"
@@ -162,7 +167,7 @@ backup-tar-pull() {
   else
   ssh "${source}" tar -c -v --bzip2 \
     --ignore-case \
-    --exclude=/*/{.cache,.git,.gvfs,.thumbnails,.local/share/Trash,.mozilla,.dotfiles,tmp,Downloads,ISO*,rdiff-backup,rsyncsnap,backup*,Sync,syncthing,git,restic*} \
+    --exclude=/*/{.cache,.git,.gvfs,.thumbnails,.local/share/Trash,.mozilla,.dotfiles,tmp,Downloads,rdiff-backup,rsyncsnap,Sync,syncthing,git,restic*} \
     --exclude-caches-all \
     --exclude-vcs \
     --one-file-system \
@@ -186,7 +191,6 @@ tools-fail2ban-status() {
 
 ## Color log tail
 tools-logtail-color() {
-  #if [ $# -eq 0 ]; then sudo tail -f /var/log/{syslog,messages}; fi
   if [ $# -eq 1 ]; then sudo tail -f /var/log/{syslog,messages} | perl -pe 's/.*"$1".*/\e[1;31m$&\e[0m/g'; fi
 }
 
