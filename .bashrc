@@ -44,8 +44,8 @@ PROMPT_DIRTRIM=4
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ EXPORT LANGUAGE                                                            ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
+#export LC_ALL=en_US.UTF-8
+#export LANG=en_US.UTF-8
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ SET TERMINAL                                                               ║
@@ -83,7 +83,25 @@ PS1RESET="\[\e[m\]"         # Color Reset
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-# Use custom PS1 prompt script if ~/.bash_prompt exist
+# Style: [username@hostname]~$
+BASH_PROMPT() {
+  PS1="${debian_chroot:+($debian_chroot)}[${PS1USERCOLOR}\u${PS1RESET}@${PS1YELLOW}\h${PS1RESET}]${PS1BLUE}\w${PS1RESET}"
+  # Add git support to PS1 if git installed:
+  if [[ -z "$(command -v git &> /dev/null)" ]]; then
+    export GIT_PS1_SHOWDIRTYSTATE=1
+    export GIT_PS1_SHOWCOLORHINTS=1
+    export GIT_PS1_SHOWUNTRACKEDFILES=1
+    # Use parse_bash_git_branch if exist and fallback to built-in __git_ps1 function if not
+    if [[ -n "$(type -t parse_bash_git_branch)" ]]; then
+      PS1+="\$(parse_bash_git_branch)"
+    elif [[ -n "$(type -t __git_ps1)" ]]; then
+      PS1+="\$(__git_ps1 '(%s)')"
+    fi
+  fi
+  PS1+="\\$ "
+}
+
+# Use custom PS1 prompt script if ~/.bash_prompt exist else use BASH_PROMPT in ~/.bashrc
 # Ex: ln -s ~/.bash_prompt_fancy ~/.bash_prompt
 if [[ -e "${HOME}"/.bash_prompt ]]; then
   source "${HOME}"/.bash_prompt
@@ -94,30 +112,13 @@ else
   fi
 
   # Terminal color support else set PS1 with no colors
-  # Use normal colored prompt
+  # Use BASH_PROMPT
   if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
     # Get color variable depending on root(red) or user(green)
     if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
-
-    # Set PS1 color depending on root(red) or user(green)
-    export PS1="${debian_chroot:+($debian_chroot)}[${PS1YELLOW}\h${PS1RESET}](${PS1USERCOLOR}\u${PS1RESET})${PS1BLUE}\w${PS1RESET}\\$ "  # Style: [hostname](username)~$
-    #export PS1="${debian_chroot:+($debian_chroot)}[\[${PS1USERCOLOR}\]\u\[\e[m\]@\[\e[1;33m\]\h\[\e[m\]]\[\e[1;34m\]\w\[\e[m\]\\$ "  # Style: [username@hostname]~$
-
-    # Append git branch to current PS1 if git installed
-    # Do not run if git script detected
-    if [[ -z "$(command -v git &> /dev/null)" ]] && [[ ! -f "${HOME}"/.bash_git ]]; then
-      export GIT_PS1_SHOWDIRTYSTATE=1
-      export GIT_PS1_SHOWCOLORHINTS=1
-      export GIT_PS1_SHOWUNTRACKEDFILES=1
-      # Use built-in __git_ps1 if exist and fallback to parse_git_branch function if not
-      if [[ -n "$(type -t __git_ps1)" ]]; then
-        export PS1="${PS1}\$(__git_ps1 '(%s)') "
-      else
-        export PS1="${PS1}\$(parse_git_branch)"
-      fi
-    fi
+    PROMPT_COMMAND=BASH_PROMPT
   else
-    # Basic PS1 without color
+    # Else use basic PS1 without color
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
   fi
 fi
@@ -143,7 +144,7 @@ if [[ "$UID" -ne 0 ]]; then
 fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Start the ssh-agent in the background                                      ║
+# ║ Start ssh-agent in the background                                          ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Do not run if root user
 #if [[ "$UID" -ne 0 ]]; then
@@ -195,14 +196,6 @@ export EDITOR="vi"
 export PAGER="less"
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Aliases - Git dotfile                                                      ║
-# ╚════════════════════════════════════════════════════════════════════════════╝
-alias dotfiles='/usr/bin/git --git-dir=${HOME}/.dotfiles/ --work-tree=${HOME}'      # dotfiles git alias command
-alias dotfiles-ls='dotfiles ls-tree -r HEAD --name-only'                            # list files
-alias dotfiles-remove='dotfiles rm --cached'                                        # remove files
-alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
-
-# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ ALIASES                                                                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 command -v tmux &> /dev/null && alias tmuxa='tmux a || tmux new-session'
@@ -224,7 +217,7 @@ alias forgit-clean='gclean'
 alias forgit-stash-show='gss'
 alias forgit-cherry-pick='gcp'
 # -----------------------------------------------------------------------------
-alias f='sudo $(history -p !!)'    # Repeat last command using sudo aka 'fuck'
+alias f='sudo $(history -p !!)'    # Repeat last command using sudo
 alias diff='diff --color'
 alias rm='rm --preserve-root'
 alias top='top -E g'
@@ -254,11 +247,18 @@ alias llt='ls -ltr'         #  Sort by date, most recent last.
 alias lltc='ls -ltcr'       #  Sort by/show change time, most recent last.
 alias lltu='ls -ltur'       #  Sort by/show access time, most recent last.
 # ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ Aliases - Git dotfile                                                      ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+alias dotfiles='/usr/bin/git --git-dir=${HOME}/.dotfiles/ --work-tree=${HOME}'      # dotfiles git alias command
+alias dotfiles-ls='dotfiles ls-tree -r HEAD --name-only'                            # list files
+alias dotfiles-remove='dotfiles rm --cached'                                        # remove files
+alias dotfiles-reset='dotfiles fetch origin && dotfiles reset --hard origin/master' # replace local files with remote
+# ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ GRC Colors - apt install grc (Put at end of any aliases in .bashrc)        ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Colourify Commands
 GRC="$(command -v grc)"
-if [ "$TERM" != dumb ] && [ -n "$GRC" ]; then
+if [[ "$TERM" != dumb ]] && [[ -n "$GRC" ]]; then
   alias colourify="$GRC -es --colour=auto"
   alias blkid='colourify blkid'
   alias configure='colourify ./configure'
@@ -312,7 +312,7 @@ fi
 # ╚════════════════════════════════════════════════════════════════════════════╝
 # Prevent nested ranger instances
 ranger() { if [ -z "$RANGER_LEVEL" ]; then /usr/bin/ranger "$@"; else exit; fi ; }
-# ssh copy file from server back to ssh client
+# ssh copy file from server back to ssh client (testing - needs work)
 #ssh-dl(){ scp "$1" ${SSH_CLIENT%% *}:/home/ken/Downloads/ ; }
 # fzf preview vertical
 preview() { cd "$1"; fzf --bind="enter:execute($EDITOR {})" --height=70% --header="$PWD" --preview="(bat -p --color=always --line-range 1:100 {} 2> /dev/null || head -100 {})" --preview-window=right:70%:noborder --color='fg:#bbccdd,fg+:#ddeeff,bg:#334455,preview-bg:#223344,border:#778899'; cd - ; }
@@ -331,9 +331,11 @@ backupdir() { tar -czvf "${1%%/}"-"$(date +%Y-%m-%d_%H.%M.%S)".tar.gz "${1%%/}/"
 # Make backup before editing file
 safeedit() { cp "${1}" "${1}"."$(date +%Y-%m-%d_%H.%M.%S)" && "$EDITOR" "${1}" ; }
 #------------------------------------------------------------------------------
-# note function that can run commands
-export NOTEFILE="${HOME}/.note"
-note() {
+# Do not load note function if ~/.bash_note exist
+if [[ ! -e "${HOME}"/.bash_note ]]; then
+  # light version of note function that can run commands - based on ~/.bash_note
+  export NOTEFILE="${HOME}/.note"
+  note() {
   if [[ ! -e "${NOTEFILE}" ]]; then touch "${NOTEFILE}"; fi
   case "$1" in
     [1-9]*) line=$(sed -n "${1}"p "${NOTEFILE}"); eval "${line}" ;;
@@ -348,7 +350,8 @@ note() {
     -h|--help) printf "%snote\t\t\t:displays notes\n  NUM\t\t\t:run line number as command\n  -f|--fzf\t\t:run line as command (fzf)\n  --clear\t\t:clear note file\n  -l|--last\t\t:add last command entered in ~/.bash_history\n  -e|--edit\t\t:edit note file\n  -d|--delete #\t\t:delete note by line number\n  -dd\t\t\t:delete blank lines from note file\n  -b|--backup\t\t:backup note file with timestamp\n  -c|--change PATH\t:change PATH to a different note file\n  -c|--change\t\t:set PATH to default ~/.note\nCurrent note PATH:\t${NOTEFILE}\n" ;;
     *) if [[ -z "$1" ]]; then cat -n "${NOTEFILE}"; else printf '%s \n' "$*" >> "${NOTEFILE}"; fi ;;
   esac
-}
+  }
+fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ TMUX                                                                       ║
@@ -378,7 +381,7 @@ fi
 #if [[ -n "${SSH_CONNECTION}" || "${SSH_CLIENT}" ]]; then (tmux attach || tmux new-session) ; fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║ Source other files for alias/function definitions if exist.                ║
+# ║ Source other files if exist.                                               ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #for file in "${HOME}"/{.bash_colors,.bash_aliases,.bash_functions}; do [[ -r "$file" ]] && source "$file"; done; unset file
 declare -a source_files=(

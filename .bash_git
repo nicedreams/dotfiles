@@ -44,7 +44,7 @@ parse_bash_git_branch() {
       BRANCH="${YELLOW}${BRANCH}${RESET}"
     fi
     STAT="$(parse_git_dirty)"
-    echo -e "[${BRANCH}${STAT}] "
+    echo -e " [${BRANCH}${STAT}]"
   fi
 }
 
@@ -58,7 +58,7 @@ parse_git_dirty() {
   renamed="$(echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?")"
   deleted="$(echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?")"
   bits=''
-  #if [ "${clean}" == "0" ]; then bits="${GREEN}✔${bits}${RESET}"; fi
+  if [ "${clean}" == "0" ]; then bits="${GREEN}✔${bits}${RESET}"; fi
   if [ "${renamed}" == "0" ]; then bits="${RED}>${bits}${RESET}"; fi
   if [ "${ahead}" == "0" ]; then bits="${RED}+${bits}${RESET}"; fi
   if [ "${newfile}" == "0" ]; then bits="${GREEN}*${bits}${RESET}"; fi

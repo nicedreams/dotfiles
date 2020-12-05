@@ -130,14 +130,13 @@ tools-ss() { ss -tulanp ; }
 tools-docker-remove-all() { docker system purge ; }
 tools-docker-run-portainer() { docker run -d --name=portainer -v /srv/docker/portainer/data:/data -v /var/run/docker.sock:/var/run/docker.sock -e PGID=1001 -e PUID=1001 -e TZ=America/Phoenix -p 9000:9000 --restart no portainer/portainer ; }
 tools-docker-run-dockermon() { docker run -ti -v /var/run/docker.sock:/var/run/docker.sock icecrime/docker-mon ; }
-tools-docker-run-nginx() { docker run --name nginx-pwd -d -p 80:80 -v $(pwd):/usr/share/nginx/html nginx ; }
-tools-docker-run-glances() { docker pull nicolargo/glances && docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro --pid host --network host -it docker.io/nicolargo/glances ; }
 
 ## list processes using swap (enable one of three options)
 tools-swap-usage() { find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \; | awk '{print $(NF-1),$0}' | sort -hr | head | cut -d " " -f2- ; }
 
 # umask of 022 allows only you to write data, but anyone can read data.
-# umask of 077 is good for a completely private system. No other user can read or write your data.
+# umask of 077 is good for a completely private system. No other user can read or write your data if umask is set to 077.
+# umask of 002 is good when you share data with other users in the same group. Members of your group can create and modify data files; those outside your group can read data file, but cannot modify it. Set your umask to 007 to completely exclude users who are not group members.
 tools-reset-umask022() { find "$@" -type d -print0 | xargs -0 chmod 0775 && find "$@" -type f -print0 | xargs -0 chmod 0664; }
 tools-reset-umask002() { find "$@" -type d -print0 | xargs -0 chmod 0755 && find "$@" -type f -print0 | xargs -0 chmod 0644; }
 tools-reset-sanitize() { chmod -R u=rwX,g=rX,o= "$@" ;}
@@ -150,7 +149,7 @@ tools-backup-home() {
   local tmpdir="/tmp/${USER}@${HOSTNAME}_$(date +%Y-%m-%d_%H.%M.%S).tar.gz"
   tar -c -v -z \
     --ignore-case \
-    --exclude=/*/{.cache,.git,.gvfs,.ecryptfs,.Private,.xsession-errors,.thumbnails,.local/share/Trash,.mozilla,tmp,rdiff-backup,rsyncsnap,Sync,syncthing,restic*} \
+    --exclude=/*/{.cache,.git,.gvfs,.ecryptfs,.Private,.xsession-errors,.thumbnails,.local/share/Trash,.mozilla,tmp,rdiff-backup,rsyncsnap,.rsyncsnap,Sync,syncthing,Syncthing,.snapshots,restic*,Applications,Downloads,virtualbox} \
     --exclude-caches-all \
     --exclude-vcs \
     --one-file-system \
@@ -196,30 +195,39 @@ tools-logtail-color() {
 
 ## Show system status
 tools-status() {
-  printf "\n\e[30;42m  ***** SYSTEM INFORMATION *****  \e[0m\n"; hostnamectl
-  printf "%s      Manufacturer: $(cat /sys/class/dmi/id/chassis_vendor)"
-  printf "%s\n      Product Name: $(cat /sys/class/dmi/id/product_name)"
-  printf "%s\n      Machine Type: $(vserver=$(lscpu | grep Hypervisor | wc -l); if [ $vserver -gt 0 ]; then echo "VM"; else echo "Physical"; fi)"
-  printf "%s\n  Operating System: $(hostnamectl | grep "Operating System" | cut -d ' ' -f5-)"
-  printf "%s\n            Kernel: $(uname -r)"
-  printf "%s\n      Architecture: $(arch)"
-  printf "%s\n    Processor Name: $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')"
-  printf "%s\n    System Main IP: $(hostname -I | awk '{print $0}')"
-  printf "%s\n  Server Date/Time: $(printf '%(%m-%d-%Y %H:%M:%S)T' -1)"
-  cputemp=$(</sys/class/thermal/thermal_zone0/temp); printf "%s\n   CPU Tempurature: $((cputemp/1000))c"
-  printf "\n"
-  printf "%s\n\e[30;42m  ***** SYSTEM UPTIME / LOAD *****\tCPU COUNT: $(grep -c "name" /proc/cpuinfo)\e[0m\n"; uptime
-  printf "\n\e[30;42m  ***** MEMORY / SWAP *****  \e[0m\n"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'; free -m | awk 'NR==3{printf "  Swap Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
-  printf "\n\e[30;42m  ***** DISK SPACE *****  \e[0m\n"; df -x tmpfs -x devtmpfs -x overlay -hT | sort -r -k 6,6
-  disklow="$(df -PTh -x tmpfs -x devtmpfs -x cdrom -x overlay | grep -vE '^Filesystem' | awk '{ if($6 > 90) print $0 }')"; if [[ -n "${disklow[@]}" ]]; then printf "\n"; printf "%s\n" "--- WARNING DISK SPACE LOW (Used: >90%) ---" "${disklow[@]}"; fi
-  printf "\n\e[30;42m  ***** TOP 10 [MEM / CPU / TIME] *****  \e[0m\n"; paste <(printf %s "$(ps -eo %mem,comm --sort=-%mem | head -n 11)") <(printf %s "$(ps -eo %cpu,comm --sort=-%cpu | head -n 11)") <(printf %s "$(ps -eo time,comm --sort=-time | head -n 11)") | column -s $'\t' -t
+  local RED="\e[1;31m"         # Red
+  local GREEN="\e[1;32m"       # Green
+  local RESET="\e[m"           # Color Reset
+  printf "%b%s%b\n" "${GREEN}" "[- SYSTEM INFORMATION -]" "${RESET}"
+  printf '%s \n' "$(hostnamectl)"
+  printf '%18s: %s\n' "Manufacturer" "$(cat /sys/class/dmi/id/chassis_vendor)"
+  printf '%18s: %s\n' "Product Name" "$(cat /sys/class/dmi/id/product_name)"
+  printf '%18s: %s\n' "Machine Type" "$(vserver=$(lscpu | grep Hypervisor | wc -l); if [ $vserver -gt 0 ]; then echo "VM"; else echo "Physical"; fi)"
+  printf '%18s: %s\n' "Operating System" "$(hostnamectl | grep "Operating System" | cut -d ' ' -f5-)"
+  printf '%18s: %s\n' "Kernel" "$(uname -r)"
+  printf '%18s: %s\n' "Architecture" "$(arch)"
+  printf '%18s: %s\n' "SSH Port" "$(echo $SSH_CLIENT | awk '{print $3}')"
+  printf '%18s: %s\n' "SSH Client IP" "$(echo $SSH_CLIENT | awk '{print $1}')"
+  printf '%18s: %s\n' "Processor Name" "$(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')"
+  printf '%18s: %s\n' "System Main IP" "$(hostname -I | awk '{print $1}')"
+  printf '%18s: %s\n' "Server Date/Time" "$(printf '%(%m-%d-%Y %H:%M:%S)T' -1)"
+  cputemp=$(</sys/class/thermal/thermal_zone0/temp); printf '%18s: %s\n\n' "CPU Tempurature" "$((cputemp/1000))c"
+  printf "%b%s%b\n" "${GREEN}" "[- SYSTEM UPTIME/LOAD -]" "${RESET}"; uptime
+  printf "%-2s: %s%s\n\n" " (CPU COUNT" "$(grep -c "name" /proc/cpuinfo)" ")"
+  printf "%b%s%b\n" "${GREEN}" "[- MEMORY/SWAP -]" "${RESET}"; free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'; free -m | awk 'NR==3{printf "  Swap Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }'
+  printf "\n%b%s%b\n" "${GREEN}" "[- DISK SPACE -]" "${RESET}"; df -x tmpfs -x devtmpfs -x overlay -hT | sort -r -k 6,6
+  # Disk space low warning
+  disklow="$(df -PTh -x tmpfs -x devtmpfs -x cdrom -x overlay | grep -vE '^Filesystem' | awk '{ if($6 > 90) print $0 }')"; if [[ -n "${disklow[@]}" ]]; then printf "\n"; printf '%s\n' "--- WARNING DISK SPACE LOW (Used: >90%) ---" "${disklow[@]}"; fi
+  printf "\n%b%s%b\n" "${GREEN}" "[- TOP 10 MEM/CPU/TIME -]" "${RESET}"; paste <(printf %s "$(ps -eo %mem,comm --sort=-%mem | head -n 11)") <(printf %s "$(ps -eo %cpu,comm --sort=-%cpu | head -n 11)") <(printf %s "$(ps -eo time,comm --sort=-time | head -n 11)") | column -s $'\t' -t
 }
 
 ## Show docker/lxc/kvm
 tools-virt() {
-  printf "\n\e[30;42m  ***** RUNNING DOCKER CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/docker" ]] && sudo docker ps
-  printf "\n\e[30;42m  ***** RUNNING LXC CONTAINERS ***** \e[0m\n"; [[ -f "/usr/bin/lxc-ls" ]] && sudo lxc-ls -f | grep RUNNING
-  printf "\n\e[30;42m  ***** RUNNING KVM GUESTS ***** \e[0m\n"; [[ -f "/usr/bin/virsh" ]] && sudo virsh list --all | grep running ; echo
+  local GREEN="\e[1;32m"       # Green
+  local RESET="\e[m"           # Color Reset
+  printf "\n%b%s%b\n" "${GREEN}" "[-RUNNING DOCKER CONTAINERS-]" "${RESET}"; [[ -f "/usr/bin/docker" ]] && sudo docker ps
+  printf "\n%b%s%b\n" "${GREEN}" "[-RUNNING LXC CONTAINERS-]" "${RESET}"; [[ -f "/usr/bin/lxc-ls" ]] && sudo lxc-ls -f | grep RUNNING
+  printf "\n%b%s%b\n" "${GREEN}" "[-RUNNING KVM GUESTS-]" "${RESET}"; [[ -f "/usr/bin/virsh" ]] && sudo virsh list --all | grep running ; echo
 }
 
 ## Write a horizontal line of characters
