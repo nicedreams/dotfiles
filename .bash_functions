@@ -149,9 +149,8 @@ tools-backup-home() {
   local tmpdir="/tmp/${USER}@${HOSTNAME}_$(date +%Y-%m-%d_%H.%M.%S).tar.gz"
   tar -c -v -z \
     --ignore-case \
-    --exclude=/*/{.cache,.git,.gvfs,.ecryptfs,.Private,.xsession-errors,.thumbnails,.local/share/Trash,.mozilla,tmp,rdiff-backup,rsyncsnap,.rsyncsnap,Sync,syncthing,Syncthing,.snapshots,restic*,Applications,Downloads,virtualbox} \
+    --exclude=/*/{.cache,.gvfs,.ecryptfs,.Private,.xsession-errors,.thumbnails,.local/share/Trash,.mozilla,tmp,rdiff-backup,rsyncsnap,.rsyncsnap,Sync,syncthing,Syncthing,.snapshots,restic*,Applications,Downloads,virtualbox,Steam,.dotfiles} \
     --exclude-caches-all \
-    --exclude-vcs \
     --one-file-system \
     -f "${tmpdir}" "${HOME}"/*
   mv -v "${tmpdir}" "${HOME}"/

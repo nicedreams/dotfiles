@@ -1,40 +1,58 @@
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ PS1 PROMPT                                                                 ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-# PS1 COLORS
-PS1BLACK="\[\e[1;30m\]"       # Black
-PS1RED="\[\e[1;31m\]"         # Red
-PS1GREEN="\[\e[1;32m\]"       # Green
-PS1YELLOW="\[\e[1;33m\]"      # Yellow
-PS1BLUE="\[\e[1;34m\]"        # Blue
-PS1PURPLE="\[\e[1;35m\]"      # Purple
-PS1CYAN="\[\e[1;36m\]"        # Cyan
-PS1WHITE="\[\e[1;37m\]"       # White
-PS1RESET="\[\e[m\]"           # Color Reset
-
-# Get color variable depending on root(red) or user(green)
-if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
-
 _PROMPT() {
+  # Get color variable depending on root(red) or user(green)
+  if [[ "$UID" -eq 0 ]]; then export PS1USERCOLOR="${PS1RED}"; else export PS1USERCOLOR="${PS1GREEN}"; fi
+  
+  # PS1 COLORS
+  local PS1BLACK="\[\e[1;30m\]"       # Black
+  local PS1RED="\[\e[1;31m\]"         # Red
+  local PS1GREEN="\[\e[1;32m\]"       # Green
+  local PS1YELLOW="\[\e[1;33m\]"      # Yellow
+  local PS1BLUE="\[\e[1;34m\]"        # Blue
+  local PS1PURPLE="\[\e[1;35m\]"      # Purple
+  local PS1CYAN="\[\e[1;36m\]"        # Cyan
+  local PS1WHITE="\[\e[1;37m\]"       # White
+  local PS1RESET="\[\e[m\]"           # Color Reset
+
   _EXIT_STATUS=$?
   [ $_EXIT_STATUS != 0 ] && _EXIT_STATUS_STR=" ${PS1RESET}[${PS1RED}$_EXIT_STATUS${PS1RESET}]${PS1RESET}"
   export GIT_PS1_SHOWDIRTYSTATE=1
   export GIT_PS1_SHOWCOLORHINTS=1
   export GIT_PS1_SHOWUNTRACKEDFILES=1
   PS1=""
-  PS1+="┌─╼"
+  PS1+="${PS1RESET}┌─╼${PS1RESET}"
   PS1+="[${PS1YELLOW}\h${PS1RESET}]"
   PS1+="${PS1WHITE}╺─╸${PS1RESET}"
   PS1+="(${PS1USERCOLOR}\u${PS1RESET})"
   PS1+="${PS1WHITE}╺─╸${PS1RESET}"
   PS1+="[${PS1PURPLE}\A${PS1RESET}]"
   PS1+="${PS1RESET}$_EXIT_STATUS_STR${PS1RESET}"
-  PS1+=" \$(__git_ps1 '(%s)')"
+  if [[ -z "$(command -v git &> /dev/null)" ]]; then
+    export GIT_PS1_SHOWDIRTYSTATE=1
+    export GIT_PS1_SHOWCOLORHINTS=1
+    export GIT_PS1_SHOWUNTRACKEDFILES=1
+    # Use parse_bash_git_branch from ~/.bash_git if exist and fallback to built-in __git_ps1 if not
+    if [[ -n "$(type -t parse_bash_git_branch)" ]]; then
+      PS1+="\$(parse_bash_git_branch)"
+    elif [[ -n "$(type -t __git_ps1)" ]]; then
+      #source /etc/bash_completion.d/git-prompt
+      export GIT_PS1_SHOWDIRTYSTATE=1
+      export GIT_PS1_SHOWSTASHSTATE=1
+      export GIT_PS1_SHOWCOLORHINTS=1
+      export GIT_PS1_HIDE_IF_PWD_IGNORED=1
+      export GIT_PS1_SHOWUNTRACKEDFILES=1
+      export GIT_PS1_SHOWUPSTREAM="auto"
+      export GIT_PS1_DESCRIBE_STYLE="contains"
+      PS1+="\$(__git_ps1 ' (%s)')"
+    fi
+  fi
+  PS1+=" ${PS1WHITE}[${PS1BLUE}\w${PS1WHITE}]${PS1RESET}"
   PS1+="\n"
-  PS1+="└─╼"
-  PS1+="[${PS1BLUE}\w${PS1RESET}]"
-  #PS1+="${PS1RESET} >> ${PS1RESET}"
-  PS1+="${PS1RESET} \\$ ${PS1RESET}"
+  PS1+="${PS1RESET}└─╼${PS1RESET}"
+  PS1+="${PS1USERCOLOR}❱ ${PS1RESET}"
+  #PS1+="${PS1RESET} \\$ ${PS1RESET}"
   unset _EXIT_STATUS_STR
   unset _EXIT_STATUS
   unset _BRANCH_STR

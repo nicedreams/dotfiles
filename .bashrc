@@ -88,13 +88,18 @@ BASH_PROMPT() {
   PS1="${debian_chroot:+($debian_chroot)}[${PS1USERCOLOR}\u${PS1RESET}@${PS1YELLOW}\h${PS1RESET}]${PS1BLUE}\w${PS1RESET}"
   # Add git support to PS1 if git installed:
   if [[ -z "$(command -v git &> /dev/null)" ]]; then
-    export GIT_PS1_SHOWDIRTYSTATE=1
-    export GIT_PS1_SHOWCOLORHINTS=1
-    export GIT_PS1_SHOWUNTRACKEDFILES=1
     # Use parse_bash_git_branch if exist and fallback to built-in __git_ps1 function if not
     if [[ -n "$(type -t parse_bash_git_branch)" ]]; then
       PS1+="\$(parse_bash_git_branch)"
     elif [[ -n "$(type -t __git_ps1)" ]]; then
+      #source /etc/bash_completion.d/git-prompt
+      export GIT_PS1_SHOWDIRTYSTATE=1
+      export GIT_PS1_SHOWSTASHSTATE=1
+      export GIT_PS1_SHOWCOLORHINTS=1
+      export GIT_PS1_HIDE_IF_PWD_IGNORED=1
+      export GIT_PS1_SHOWUNTRACKEDFILES=1
+      export GIT_PS1_SHOWUPSTREAM="auto"
+      export GIT_PS1_DESCRIBE_STYLE="contains"
       PS1+="\$(__git_ps1 '(%s)')"
     fi
   fi
@@ -119,7 +124,7 @@ else
     PROMPT_COMMAND=BASH_PROMPT
   else
     # Else use basic PS1 without color
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\\$ '
   fi
 fi
 
