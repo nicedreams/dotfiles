@@ -306,15 +306,17 @@ fi
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ exa - ls replacement                                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
-if [[ -f $(command -v exa) ]]; then
-  alias l='exa -l --group-directories-first'
-  alias ll='exa -la --group-directories-first'
-  alias llt='exa -la --tree --level=2 --group-directories-first'
-fi
+#if [[ -f $(command -v exa) ]]; then
+#  alias l='exa -l --group-directories-first'
+#  alias ll='exa -la --group-directories-first'
+#  alias llt='exa -la --tree --level=2 --group-directories-first'
+#fi
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ FUNCTIONS                                                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+# Print current date and time while creating file names. Example: tar -czvf my-backup-$(datetime).tar.gz ${HOME}/*
+datetime() { printf "%s" "$(printf '%(%Y-%m-%d_%H.%M.%S)T' -1)"; }
 # Prevent nested ranger instances
 ranger() { if [ -z "$RANGER_LEVEL" ]; then /usr/bin/ranger "$@"; else exit; fi ; }
 # ssh copy file from server back to ssh client (testing - needs work)
